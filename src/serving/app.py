@@ -94,10 +94,11 @@ app = FastAPI(
 
 @app.get("/health", response_model=HealthResponse)
 async def health():
+    info = pipeline.health() if hasattr(pipeline, "health") else {}
     return HealthResponse(
-        status="ok",
-        model_loaded=pipeline.booster is not None,
-        index_size=pipeline.faiss_index.ntotal if pipeline.faiss_index else 0,
+        status=info.get("status", "ok"),
+        model_loaded=info.get("model_loaded", pipeline._loaded if hasattr(pipeline, "_loaded") else False),
+        index_size=info.get("index_size", 0),
     )
 
 

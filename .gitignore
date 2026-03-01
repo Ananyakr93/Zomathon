@@ -63,3 +63,11 @@ logs/
 .pytest_cache/
 htmlcov/
 .coverage
+
+# ── Large data files ───────────────────────────────────────
+cart_scenarios_sequential_50k.json
+docx_content.txt
+evaluation_results.json
+test_results.json
+out_architecture.json
+*.webp

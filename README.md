@@ -1,8 +1,8 @@
 <p align="center">
-  <h1 align="center">🛒 CartComplete</h1>
+  <h1 align="center">🛒 MealMind — CSAO AI Recommender</h1>
   <p align="center">
-    <strong>Cart Super Add-On Recommender — Zomato Hackathon 2026</strong><br>
-    LLM-augmented synthetic data · Sentence-Transformer embeddings · LightGBM sequential ranker
+    <strong>Context-Aware Cart Super Add-On System — Zomathon 2026</strong><br>
+    GenAI-powered meal understanding · Multi-agent re-ranking · Production-grade serving
   </p>
 </p>
 
@@ -11,122 +11,200 @@
 ## 📌 Problem Statement
 
 When a Zomato customer is building their cart, recommend the **most relevant
-add-on items** (garlic bread, beverages, desserts, sides) that maximise
-order value while feeling natural and personalised.
+add-on items** (beverages, desserts, sides, breads) that maximise order value
+while feeling natural, culturally appropriate, and personalised.
 
-## 🏗️ Architecture
+## 💡 What Makes This Novel
+
+| Innovation | Description |
+|---|---|
+| **3-Agent CSAO Architecture** | MealContextAgent → RerankerAgent → ColdStartAgent work as a pipeline — no single model handles everything |
+| **Cultural Meal Intelligence** | System understands that Biryani needs Raita (not Salsa), Dosa needs Sambhar (not Soup) |
+| **5-Level Graceful Degradation** | Full pipeline → Graph-only → CF-only → Cold Start → Popularity — the system never fails |
+| **Statistical A/B Testing** | Bonferroni correction + O'Brien-Fleming sequential boundaries — production-grade experimentation |
+| **Zero Cold-Start Failures** | Dedicated ColdStartAgent uses cuisine knowledge base — works even for brand-new users/restaurants |
+
+## 🏗️ System Architecture
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    FastAPI Server                        │
-│  POST /recommend   POST /recommend/sequential           │
-└──────────┬──────────────────────┬───────────────────────┘
-           │                      │
-     ┌─────▼─────┐        ┌──────▼──────┐
-     │ Embedding  │        │  Feature    │
-     │ (MiniLM)   │        │  Assembly   │
-     └─────┬─────┘        └──────┬──────┘
-           │                      │
-     ┌─────▼─────┐        ┌──────▼──────┐
-     │   FAISS    │        │  LightGBM   │
-     │  Retrieve  │───────▶│  Re-Rank    │
-     │  Top-50    │        │ (LambdaRank)│
-     └───────────┘        └──────┬──────┘
-                                  │
-                           Top-5 Add-Ons
+┌──────────────────────────────────────────────────────────────────────┐
+│                       FastAPI + Orchestrator                         │
+│  POST /recommend    POST /recommend/sequential    GET /health        │
+├───────────┬────────────────┬────────────────┬───────────────────────┤
+│  Rate     │  L1 LRU Cache  │  Circuit       │  Request             │
+│  Limiter  │  L2 Redis      │  Breakers      │  Tracer              │
+├───────────┴────────────────┴────────────────┴───────────────────────┤
+│                                                                      │
+│  ┌──────────────┐   ┌──────────────┐   ┌──────────────────────────┐ │
+│  │ Feature      │   │ Candidate    │   │ LLM Re-ranking Pipeline  │ │
+│  │ Retrieval    │──▶│ Generation   │──▶│                          │ │
+│  │ (30ms SLA)   │   │ (50ms SLA)   │   │  MealContextAgent        │ │
+│  └──────────────┘   └──────────────┘   │  ↓ analyze meal type     │ │
+│         ▲                               │  ↓ cultural context      │ │
+│         │                               │  RerankerAgent           │ │
+│  ┌──────────────┐                      │  ↓ 4-axis weighted score │ │
+│  │ ColdStart    │◀── fallback ─────────│  ↓ business rules        │ │
+│  │ Agent        │                      │  (150ms SLA)             │ │
+│  └──────────────┘                      └──────────────────────────┘ │
+│                                                                      │
+├──────────────────────────────────────────────────────────────────────┤
+│  Monitoring Dashboard │ Alert Engine │ P50/P95/P99 Histograms       │
+└──────────────────────────────────────────────────────────────────────┘
 ```
 
-**End-to-end latency: ~18 ms on CPU** (well under the 200 ms target).
+**End-to-end latency budget: 250ms** | **Target: 10M predictions/day, 50K RPS peak**
+
+## 🤖 The Three CSAO Agents
+
+### 1. MealContextAgent (`src/agents/meal_context_agent.py`)
+Analyses the cart to understand **what kind of meal** it is and **what's missing**.
+
+- **Meal Type Identification:** Breakfast / Lunch / Dinner / Snack / Late-night (with confidence scores)
+- **Completion Analysis:** Scores how "complete" the meal is (0-1) and identifies missing components
+- **Cultural Intelligence:** Cuisine-specific patterns — North Indian (roti + raita), South Indian (sambhar + chutney), Chinese (soup + rice/noodles)
+
+### 2. RerankerAgent (`src/agents/reranker_agent.py`)
+Takes 50 candidates from collaborative filtering and produces the **optimal top 10**.
+
+- **Meal Completion (40%):** Does this item fill a gap identified by MealContextAgent?
+- **Contextual Relevance (25%):** Time-appropriate? Price-aligned? Cuisine-consistent?
+- **Personalisation (20%):** Matches user dietary preferences and past patterns
+- **Business Value (15%):** Item margin, platform promotions, diversity constraints
+
+### 3. ColdStartAgent (`src/agents/cold_start_agent.py`)
+Handles scenarios where ML models have **zero data** — using pure reasoning.
+
+- **New Users:** No order history → cuisine knowledge base inference
+- **New Restaurants:** Limited data → menu-based logical pairings
+- **Unusual Carts:** No matching patterns → contextual reasoning (time + location + cuisine)
+
+## 📊 A/B Testing Framework (`src/experimentation/`)
+
+Production-grade experimentation engine:
+
+| Feature | Implementation |
+|---|---|
+| **User Assignment** | Deterministic MD5 salt-based hashing (same user → same variant) |
+| **Stat Tests** | Welch's t-test (continuous) + z-test (proportions) |
+| **Confidence Intervals** | Bootstrap with 1000 resamples |
+| **Multiple Testing** | Bonferroni correction across all primary metrics |
+| **Sequential Testing** | O'Brien-Fleming spending function (4 interim looks) |
+| **Decision Engine** | SHIP / ITERATE / KILL based on metrics + guardrails |
+| **Metrics** | 11 metrics across 3 tiers (primary, secondary, guardrail) |
+
+## 🛡️ Production Infrastructure (`src/serving/`)
+
+| Component | File | What it does |
+|---|---|---|
+| **API Server** | `app.py` | FastAPI with health checks, request validation |
+| **Orchestrator** | `orchestrator.py` | Wires the entire pipeline with parallelism |
+| **Circuit Breaker** | `circuit_breaker.py` | 3-state CB (CLOSED→OPEN→HALF_OPEN) per dependency |
+| **Cache** | `cache_manager.py` | L1 in-process LRU + L2 Redis with namespace TTLs |
+| **Monitoring** | `monitoring.py` | Request tracing, latency histograms, alert engine |
+| **Config** | `production_config.py` | Latency budgets, K8s scaling, cost model |
+| **Pipeline** | `inference.py` | End-to-end inference connecting all agents |
+
+### Latency Budget
+
+| Stage | SLA | Optimization |
+|---|---|---|
+| Cache Lookup | 1ms | L1 in-process LRU, L2 Redis |
+| Feature Retrieval | 30ms | Pre-computed, Redis feature store |
+| Candidate Gen | 50ms | FAISS ANN + Graph PMI |
+| LLM Re-ranking | 150ms | Agent pipeline with CB fallback |
+| Post-processing | 20ms | Business rules engine |
+| **Total** | **250ms** | **P95 target: 300ms** |
+
+### Scaling
+
+| Metric | Value |
+|---|---|
+| Daily Predictions | 10M |
+| Peak RPS | 50,000 |
+| RPS per Pod | 500 |
+| Pods at Peak | 120 (HPA managed) |
+| Pods at Average | 10 |
+| Availability Target | 99.9% |
+
+### Monthly Cost Estimate
+
+| Component | Cost (₹) |
+|---|---|
+| Compute (K8s pods) | ₹2,40,000 |
+| Redis Cluster (6 nodes) | ₹80,000 |
+| PostgreSQL (+ 2 replicas) | ₹45,000 |
+| Vector DB | ₹35,000 |
+| LLM API (after 40% cache) | ₹9,00,000 |
+| Monitoring | ₹30,000 |
+| **Total** | **₹13,50,000 (~$16K)** |
+
+## 📂 Project Structure
+
+```
+MealMind/
+├── configs/
+│   └── config.yaml                     # all hyperparams
+├── src/
+│   ├── agents/                         # 🤖 CSAO AI Agents
+│   │   ├── meal_context_agent.py       #   Meal understanding + cultural context
+│   │   ├── reranker_agent.py           #   Multi-axis candidate re-ranking
+│   │   └── cold_start_agent.py         #   Zero-data fallback reasoning
+│   ├── experimentation/                # 📊 A/B Testing
+│   │   ├── ab_test_framework.py        #   Full experiment engine
+│   │   └── metrics.py                  #   11 metrics, 3 tiers
+│   ├── serving/                        # 🛡️ Production Infrastructure
+│   │   ├── app.py                      #   FastAPI endpoints
+│   │   ├── orchestrator.py             #   Pipeline orchestration
+│   │   ├── inference.py                #   End-to-end inference
+│   │   ├── circuit_breaker.py          #   Failure handling
+│   │   ├── cache_manager.py            #   L1/L2 caching
+│   │   ├── monitoring.py               #   Observability
+│   │   └── production_config.py        #   Config & cost model
+│   ├── data/
+│   │   ├── synthetic_generator.py      #   LLM-augmented data gen
+│   │   └── preprocessor.py             #   Feature engineering
+│   ├── features/
+│   │   └── embeddings.py               #   MiniLM + FAISS
+│   ├── models/
+│   │   └── ranker.py                   #   LightGBM LambdaRank
+│   └── evaluation/
+│       └── metrics.py                  #   NDCG, MRR, Hit@K
+├── tests/
+│   ├── test_api.py
+│   ├── test_embeddings.py
+│   └── test_metrics.py
+├── requirements.txt
+└── README.md
+```
 
 ## 🎯 How We Address Every Evaluation Criterion
 
 | # | Criterion | Our Approach |
 |---|-----------|-------------|
-| 1 | **Data Realism** | LLM-augmented synthetic data built on a real Indian food ontology. An LLM (Flan-T5 / Ollama Mistral) generates co-purchase reasoning so add-on pairings reflect how real customers order (biryani→raita, pizza→garlic bread + coke). |
-| 2 | **AI Edge (LLM)** | LLM used at *data generation* time to inject natural language reasoning into training signal. Sentence-transformer embeddings enable zero-shot cold-start for new menu items. |
-| 3 | **Latency < 200 ms** | Two-stage pipeline: FAISS ANN retrieval (~2 ms) + LightGBM scoring (~1 ms). Total P95 < 20 ms. No LLM at inference time. |
-| 4 | **Cold-Start** | New / unseen add-ons are embedded from their *name + category text* via sentence-transformers — no interaction history required. |
-| 5 | **Sequential Cart Updates** | Every cart mutation triggers re-embedding + re-ranking. Cart embedding uses weighted mean-pooling with recency decay, so the system learns that "just added" items dominate the recommendation context. |
-| 6 | **Overall Quality** | Production-ready FastAPI service, NDCG/MRR/Hit@K eval suite, YAML config, unit + integration tests, clean separation of concerns. |
-
-## 📊 Dataset
-
-The dataset used for this project is too large to be included in the repository directly. You can find and download the complete dataset from the following link:
-[CartComplete Dataset (Google Drive)](https://drive.google.com/drive/folders/1USc1F_p9h9e45HMD05Z84ohKJhuLVWQJ?usp=drive_link)
-
-## 📂 Project Structure
-
-```
-CartComplete/
-├── configs/
-│   └── config.yaml              # all hyperparams in one place
-├── data/
-│   ├── raw/
-│   │   └── cuisine_ontology.json  # seed ontology
-│   ├── processed/                 # generated training data (parquet)
-│   └── embeddings/                # FAISS indices & numpy arrays
-├── models/
-│   ├── prompts/
-│   │   └── addon_suggestion.txt   # LLM prompt template
-│   └── saved/                     # serialised LightGBM models
-├── src/
-│   ├── data/
-│   │   ├── synthetic_generator.py # LLM-augmented cart generation
-│   │   └── preprocessor.py        # feature engineering & splits
-│   ├── features/
-│   │   └── embeddings.py          # sentence-transformer + FAISS
-│   ├── models/
-│   │   └── ranker.py              # LightGBM LambdaRank train/predict
-│   ├── evaluation/
-│   │   └── metrics.py             # NDCG, MRR, Hit@K, latency bench
-│   ├── serving/
-│   │   ├── app.py                 # FastAPI endpoints
-│   │   └── inference.py           # end-to-end inference pipeline
-│   └── utils/
-│       └── config.py              # paths & constants
-├── tests/
-│   ├── test_metrics.py
-│   ├── test_embeddings.py
-│   └── test_api.py
-├── notebooks/                     # EDA & experimentation
-├── scripts/                       # CLI scripts (train, eval, serve)
-├── logs/
-├── requirements.txt
-├── .gitignore
-└── README.md
-```
+| 1 | **Data Realism** | LLM-augmented synthetic data built on a real Indian food ontology. 50K sequential cart scenarios with co-purchase reasoning. |
+| 2 | **AI Edge (LLM)** | 3-agent GenAI system with cultural meal intelligence, multi-axis re-ranking, and zero-data cold-start reasoning. |
+| 3 | **Latency < 200ms** | Two-path architecture: fast path (FAISS + LightGBM < 20ms) and full path (agent pipeline < 250ms with circuit-breaker fallback). |
+| 4 | **Cold-Start** | Dedicated ColdStartAgent with cuisine knowledge base — 5 reasoning strategies for new users, restaurants, and unusual carts. |
+| 5 | **Sequential Cart Updates** | Every cart mutation triggers re-analysis and re-ranking. Exclusion sets prevent repeat recommendations. |
+| 6 | **Overall Quality** | Production-grade: circuit breakers, caching, monitoring, A/B testing, deployment pipeline, cost analysis. |
 
 ## 🚀 Quick Start
 
-### 1. Create virtual environment
+### 1. Setup
 
 ```bash
-# Windows (PowerShell)
 python -m venv venv
-.\venv\Scripts\Activate.ps1
-
-# Linux / macOS
-python3 -m venv venv
-source venv/bin/activate
-```
-
-### 2. Install dependencies
-
-```bash
-pip install --upgrade pip
+.\venv\Scripts\Activate.ps1          # Windows
 pip install -r requirements.txt
 ```
 
-> **Note:** PyTorch is installed as CPU-only via the `--extra-index-url` in
-> requirements.txt. Total install is ~2 GB.
-
-### 3. Run tests
+### 2. Run tests
 
 ```bash
 python -m pytest tests/ -v
 ```
 
-### 4. Start the API server
+### 3. Start the API server
 
 ```bash
 uvicorn src.serving.app:app --host 0.0.0.0 --port 8000 --reload
@@ -138,27 +216,19 @@ Then visit: [http://localhost:8000/docs](http://localhost:8000/docs)
 
 | Layer | Technology | Why |
 |-------|-----------|-----|
-| Synthetic Data | **Flan-T5 / Ollama Mistral** | Free, CPU-friendly LLM for co-purchase reasoning |
-| Embeddings | **all-MiniLM-L6-v2** (22 MB) | Fast, high-quality 384-d embeddings, <10ms/encode |
-| Retrieval | **FAISS (CPU)** | Sub-millisecond ANN search |
-| Ranking | **LightGBM LambdaRank** | NDCG-optimised, <1ms inference |
-| Serving | **FastAPI + Uvicorn** | Async, production-grade, auto-docs |
-| Storage | **Parquet (PyArrow)** | Columnar, compressed, fast I/O |
+| **AI Agents** | Custom Python agents | Meal understanding → Re-ranking → Cold start pipeline |
+| **Embeddings** | all-MiniLM-L6-v2 (22 MB) | Fast 384-d embeddings, <10ms/encode |
+| **Retrieval** | FAISS (CPU) | Sub-millisecond ANN search |
+| **Ranking** | LightGBM LambdaRank | NDCG-optimised, <1ms inference |
+| **Serving** | FastAPI + Uvicorn | Async, production-grade, auto-docs |
+| **Experimentation** | Custom A/B framework | Bonferroni + O'Brien-Fleming boundaries |
+| **Infra** | Circuit breakers + caching | 5-level fallback, L1/L2 cache |
 
 ## 💰 Cost
 
-**₹0.** Everything runs on CPU with free/open-source models. No paid APIs, no
-cloud GPUs, no Docker required.
-
-## 📝 Next Steps
-
-- [ ] **Step 2:** Implement synthetic data generator with LLM augmentation
-- [ ] **Step 3:** Build embedding pipeline and FAISS index
-- [ ] **Step 4:** Train LightGBM ranker, evaluate on test set
-- [ ] **Step 5:** Wire up end-to-end inference pipeline
-- [ ] **Step 6:** Latency benchmarking & optimisation
-- [ ] **Step 7:** Demo notebook / video
+**Development: ₹0.** Everything runs on CPU with free/open-source models.
+**Production estimate:** ~₹13.5L/month at full scale (10M daily predictions).
 
 ---
 
-*Built for Zomathon 2026 🍕*
+*Built for Zomathon 2026 🍕 — by Team MealMind*
