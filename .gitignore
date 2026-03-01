@@ -1,0 +1,65 @@
+# ============================================================
+# CartComplete .gitignore
+# ============================================================
+
+# ── Python ─────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+*.egg
+dist/
+build/
+eggs/
+
+# ── Virtual Environments ───────────────────────────────────
+venv/
+.venv/
+env/
+.env
+*.env
+
+# ── IDE / Editor ───────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Jupyter ────────────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ── Data (large files — keep structure, ignore blobs) ──────
+data/raw/*.csv
+data/raw/*.json
+data/raw/*.parquet
+data/processed/*.csv
+data/processed/*.parquet
+data/embeddings/*.npy
+data/embeddings/*.faiss
+data/embeddings/*.pkl
+new/*.json
+
+# ── Models (serialized weights) ────────────────────────────
+models/saved/*.bin
+models/saved/*.pkl
+models/saved/*.joblib
+models/saved/*.txt
+models/saved/*.onnx
+
+# ── Logs ───────────────────────────────────────────────────
+logs/
+*.log
+
+# ── Misc ───────────────────────────────────────────────────
+*.bak
+*.tmp
+.cache/
+.pytest_cache/
+htmlcov/
+.coverage

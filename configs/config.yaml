@@ -1,0 +1,53 @@
+# ============================================================
+# CartComplete — Model & Pipeline Configuration
+# ============================================================
+
+project:
+  name: CartComplete
+  version: "0.1.0"
+  description: >
+    LLM-augmented synthetic data + sentence-transformer embeddings
+    + LightGBM sequential ranker for Zomato Cart Super Add-On recs.
+
+data:
+  n_sessions: 50000
+  seed: 42
+  val_fraction: 0.1
+  test_fraction: 0.1
+  ontology_path: data/raw/cuisine_ontology.json
+
+embedding:
+  model_name: all-MiniLM-L6-v2
+  dimension: 384
+  batch_size: 256
+  normalize: true
+
+faiss:
+  index_type: IndexFlatIP   # cosine sim on normalised vectors
+  top_k_retrieval: 50       # candidates before re-rank
+
+ranker:
+  objective: lambdarank
+  metric: ndcg
+  ndcg_eval_at: [3, 5, 10]
+  num_leaves: 63
+  learning_rate: 0.05
+  feature_fraction: 0.8
+  bagging_fraction: 0.8
+  bagging_freq: 5
+  num_boost_round: 500
+  early_stopping_rounds: 30
+
+llm:
+  backend: huggingface       # huggingface | ollama
+  hf_model_id: google/flan-t5-small
+  ollama_model: mistral
+  temperature: 0.7
+  max_tokens: 256
+
+serving:
+  host: "0.0.0.0"
+  port: 8000
+  workers: 1
+  latency_budget_ms: 200
+  top_n_default: 5
