@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import time
 import logging
 from collections import OrderedDict
@@ -78,41 +79,95 @@ class L1Cache:
 
 
 # ═════════════════════════════════════════════════════════════════════════════
-#  L2 — REDIS-COMPATIBLE STORE (dict-backed for local / testing)
+#  L2 — REDIS WITH AUTO-FALLBACK TO IN-MEMORY DICT
 # ═════════════════════════════════════════════════════════════════════════════
 
 class L2Cache:
     """
-    Redis-compatible cache implemented as a Python dict.
-    In production, swap this for an actual Redis client (e.g. redis-py).
+    Redis-backed L2 cache with automatic fallback to in-memory dict.
+
+    On init, attempts to connect to Redis. If Redis is unavailable,
+    silently falls back to a Python dict store (zero-config local dev).
+
+    Env vars:
+        REDIS_URL : Redis connection URL (default: redis://localhost:6379/0)
     """
 
     def __init__(self) -> None:
-        self._store: dict[str, tuple[Any, float]] = {}
         self._hits = 0
         self._misses = 0
+        self._using_redis = False
+        self._redis = None
+        self._store: dict[str, tuple[Any, float]] = {}
+
+        # Auto-detect Redis
+        redis_url = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
+        try:
+            import redis as redis_lib
+            self._redis = redis_lib.Redis.from_url(redis_url, socket_timeout=1)
+            self._redis.ping()
+            self._using_redis = True
+            logger.info("L2Cache: Connected to Redis at %s", redis_url)
+        except Exception:
+            self._redis = None
+            self._using_redis = False
+            logger.info("L2Cache: Redis unavailable, using in-memory dict fallback")
+
+    @property
+    def backend(self) -> str:
+        return "redis" if self._using_redis else "in_memory"
 
     def get(self, key: str) -> Any | None:
-        entry = self._store.get(key)
-        if entry is None:
-            self._misses += 1
-            return None
-        value, expiry = entry
-        if time.monotonic() > expiry:
-            del self._store[key]
-            self._misses += 1
-            return None
-        self._hits += 1
-        return value
+        if self._using_redis:
+            try:
+                raw = self._redis.get(key)  # type: ignore
+                if raw is None:
+                    self._misses += 1
+                    return None
+                self._hits += 1
+                return json.loads(raw)
+            except Exception:
+                self._misses += 1
+                return None
+        else:
+            entry = self._store.get(key)
+            if entry is None:
+                self._misses += 1
+                return None
+            value, expiry = entry
+            if time.monotonic() > expiry:
+                del self._store[key]
+                self._misses += 1
+                return None
+            self._hits += 1
+            return value
 
     def set(self, key: str, value: Any, ttl_s: int = 300) -> None:
-        expiry = time.monotonic() + ttl_s
-        self._store[key] = (value, expiry)
+        if self._using_redis:
+            try:
+                self._redis.setex(key, ttl_s, json.dumps(value, default=str))  # type: ignore
+            except Exception:
+                logger.debug("Redis set failed for key %s, using in-memory", key)
+                expiry = time.monotonic() + ttl_s
+                self._store[key] = (value, expiry)
+        else:
+            expiry = time.monotonic() + ttl_s
+            self._store[key] = (value, expiry)
 
     def delete(self, key: str) -> None:
+        if self._using_redis:
+            try:
+                self._redis.delete(key)  # type: ignore
+            except Exception:
+                pass
         self._store.pop(key, None)
 
     def flush(self) -> None:
+        if self._using_redis:
+            try:
+                self._redis.flushdb()  # type: ignore
+            except Exception:
+                pass
         self._store.clear()
 
     @property
@@ -122,11 +177,13 @@ class L2Cache:
 
     def stats(self) -> dict:
         return {
-            "size": len(self._store),
+            "backend": self.backend,
+            "size": len(self._store) if not self._using_redis else "N/A (Redis)",
             "hits": self._hits,
             "misses": self._misses,
             "hit_rate": round(self.hit_rate, 4),
         }
+
 
 
 # ═════════════════════════════════════════════════════════════════════════════

@@ -148,7 +148,7 @@ MealMind/
 │   ├── agents/                         # 🤖 CSAO AI Agents
 │   │   ├── meal_context_agent.py       #   Meal understanding + cultural context
 │   │   ├── reranker_agent.py           #   Multi-axis candidate re-ranking
-│   │   └── cold_start_agent.py         #   Zero-data fallback reasoning
+│   │   └── cold_start_agent.py         #   Zero-data fallback (13 cuisines)
 │   ├── experimentation/                # 📊 A/B Testing
 │   │   ├── ab_test_framework.py        #   Full experiment engine
 │   │   └── metrics.py                  #   11 metrics, 3 tiers
@@ -162,17 +162,23 @@ MealMind/
 │   │   └── production_config.py        #   Config & cost model
 │   ├── data/
 │   │   ├── synthetic_generator.py      #   LLM-augmented data gen
-│   │   └── preprocessor.py             #   Feature engineering
+│   │   └── preprocessor.py             #   24-feature engineering pipeline
 │   ├── features/
 │   │   └── embeddings.py               #   MiniLM + FAISS
 │   ├── models/
 │   │   └── ranker.py                   #   LightGBM LambdaRank
 │   └── evaluation/
-│       └── metrics.py                  #   NDCG, MRR, Hit@K
-├── tests/
-│   ├── test_api.py
-│   ├── test_embeddings.py
-│   └── test_metrics.py
+│       ├── metrics.py                  #   NDCG, MRR, Hit@K
+│       └── evaluate.py                 #   Full evaluation runner
+├── models/
+│   ├── saved/
+│   │   └── cart_ranker.txt             #   Trained LightGBM model
+│   └── results/
+│       └── training_results.json       #   Training metrics (NDCG@10)
+├── train_pipeline.py                   # 🏋️ End-to-end training runner
+├── test_integration.py                 # ✅ 29-test integration suite
+├── test_comprehensive.py               # 🧪 15+ real-world test cases
+├── Dockerfile                          # 🐳 Multi-stage production build
 ├── requirements.txt
 └── README.md
 ```
@@ -183,10 +189,10 @@ MealMind/
 |---|-----------|-------------|
 | 1 | **Data Realism** | LLM-augmented synthetic data built on a real Indian food ontology. 50K sequential cart scenarios with co-purchase reasoning. |
 | 2 | **AI Edge (LLM)** | 3-agent GenAI system with cultural meal intelligence, multi-axis re-ranking, and zero-data cold-start reasoning. |
-| 3 | **Latency < 200ms** | Two-path architecture: fast path (FAISS + LightGBM < 20ms) and full path (agent pipeline < 250ms with circuit-breaker fallback). |
-| 4 | **Cold-Start** | Dedicated ColdStartAgent with cuisine knowledge base — 5 reasoning strategies for new users, restaurants, and unusual carts. |
+| 3 | **Latency < 200ms** | Two-path architecture: fast path (FAISS + LightGBM <20ms) and full path (agent pipeline <250ms with circuit-breaker fallback). |
+| 4 | **Cold-Start** | Dedicated ColdStartAgent with cuisine knowledge base (13 cuisines) — 5 reasoning strategies for new users, restaurants, and unusual carts. |
 | 5 | **Sequential Cart Updates** | Every cart mutation triggers re-analysis and re-ranking. Exclusion sets prevent repeat recommendations. |
-| 6 | **Overall Quality** | Production-grade: circuit breakers, caching, monitoring, A/B testing, deployment pipeline, cost analysis. |
+| 6 | **Overall Quality** | Production-grade: circuit breakers, caching, monitoring, A/B testing, Docker deployment, cost analysis. |
 
 ## 🚀 Quick Start
 
@@ -198,19 +204,36 @@ python -m venv venv
 pip install -r requirements.txt
 ```
 
-### 2. Run tests
+### 2. Train the model
 
 ```bash
-python -m pytest tests/ -v
+python train_pipeline.py --n-scenarios 1000
 ```
 
-### 3. Start the API server
+This generates synthetic data, engineers 24 features, trains LightGBM LambdaRank, and saves the model to `models/saved/cart_ranker.txt`.
+
+### 3. Run tests
+
+```bash
+python test_integration.py           # 29 end-to-end tests
+python test_comprehensive.py         # 15+ real-world scenarios
+python -m pytest tests/ -v           # unit tests
+```
+
+### 4. Start the API server
 
 ```bash
 uvicorn src.serving.app:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 Then visit: [http://localhost:8000/docs](http://localhost:8000/docs)
+
+### 5. Docker deployment
+
+```bash
+docker build -t mealmind-csao .
+docker run -p 8000:8000 mealmind-csao
+```
 
 ## 🔧 Tech Stack
 
@@ -223,6 +246,7 @@ Then visit: [http://localhost:8000/docs](http://localhost:8000/docs)
 | **Serving** | FastAPI + Uvicorn | Async, production-grade, auto-docs |
 | **Experimentation** | Custom A/B framework | Bonferroni + O'Brien-Fleming boundaries |
 | **Infra** | Circuit breakers + caching | 5-level fallback, L1/L2 cache |
+| **Deployment** | Docker multi-stage | Non-root, health checks, 4 workers |
 
 ## 💰 Cost
 
@@ -232,3 +256,4 @@ Then visit: [http://localhost:8000/docs](http://localhost:8000/docs)
 ---
 
 *Built for Zomathon 2026 🍕 — by Team MealMind*
+

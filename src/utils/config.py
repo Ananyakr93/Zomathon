@@ -23,7 +23,7 @@ LOG_DIR = PROJECT_ROOT / "logs"
 EMBEDDING_MODEL_NAME = "all-MiniLM-L6-v2"
 EMBEDDING_DIM = 384
 FAISS_TOP_K = 50           # candidates retrieved before LightGBM re-rank
-RECOMMEND_TOP_N = 5        # final recommendations returned to user
+RECOMMEND_TOP_N = 10       # final recommendations returned to user (N=8-10 per spec)
 LATENCY_BUDGET_MS = 200    # hard ceiling
 
 # ── Data generation ───────────────────────────────────────

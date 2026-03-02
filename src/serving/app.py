@@ -39,13 +39,13 @@ class CartItem(BaseModel):
 
 class RecommendRequest(BaseModel):
     cart_items: list[CartItem]
-    top_n: int = Field(default=5, ge=1, le=20)
+    top_n: int = Field(default=10, ge=1, le=20)
     excluded_ids: list[str] = Field(default_factory=list)
 
 
 class SequentialRequest(BaseModel):
     cart_history: list[list[CartItem]]
-    top_n: int = Field(default=5, ge=1, le=20)
+    top_n: int = Field(default=10, ge=1, le=20)
 
 
 class RecommendResponse(BaseModel):

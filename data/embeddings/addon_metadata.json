@@ -1,0 +1,1763 @@
+[
+  {
+    "idx": 0,
+    "name": "Raita",
+    "category": "side",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "cooling"
+    ],
+    "source_cuisine": "North Indian"
+  },
+  {
+    "idx": 1,
+    "name": "Dal Makhani",
+    "category": "side",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "hearty",
+      "traditional"
+    ],
+    "source_cuisine": "North Indian"
+  },
+  {
+    "idx": 2,
+    "name": "Onion Salad",
+    "category": "side",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "fresh"
+    ],
+    "source_cuisine": "North Indian"
+  },
+  {
+    "idx": 3,
+    "name": "Mix Veg",
+    "category": "side",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "healthy"
+    ],
+    "source_cuisine": "North Indian"
+  },
+  {
+    "idx": 4,
+    "name": "Papad Masala",
+    "category": "side",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "crunchy"
+    ],
+    "source_cuisine": "North Indian"
+  },
+  {
+    "idx": 5,
+    "name": "Butter Naan",
+    "category": "bread",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "popular",
+      "essential"
+    ],
+    "source_cuisine": "North Indian"
+  },
+  {
+    "idx": 6,
+    "name": "Garlic Naan",
+    "category": "bread",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "popular"
+    ],
+    "source_cuisine": "North Indian"
+  },
+  {
+    "idx": 7,
+    "name": "Tandoori Roti",
+    "category": "bread",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "healthy"
+    ],
+    "source_cuisine": "North Indian"
+  },
+  {
+    "idx": 8,
+    "name": "Lachha Paratha",
+    "category": "bread",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "flaky"
+    ],
+    "source_cuisine": "North Indian"
+  },
+  {
+    "idx": 9,
+    "name": "Missi Roti",
+    "category": "bread",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "traditional"
+    ],
+    "source_cuisine": "North Indian"
+  },
+  {
+    "idx": 10,
+    "name": "Lassi (Sweet)",
+    "category": "beverage",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "cooling",
+      "traditional"
+    ],
+    "source_cuisine": "North Indian"
+  },
+  {
+    "idx": 11,
+    "name": "Masala Chaas",
+    "category": "beverage",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "cooling"
+    ],
+    "source_cuisine": "North Indian"
+  },
+  {
+    "idx": 12,
+    "name": "Coke 500ml",
+    "category": "beverage",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "popular"
+    ],
+    "source_cuisine": "North Indian"
+  },
+  {
+    "idx": 13,
+    "name": "Mango Lassi",
+    "category": "beverage",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "sweet"
+    ],
+    "source_cuisine": "North Indian"
+  },
+  {
+    "idx": 14,
+    "name": "Nimbu Pani",
+    "category": "beverage",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "refreshing"
+    ],
+    "source_cuisine": "North Indian"
+  },
+  {
+    "idx": 15,
+    "name": "Gulab Jamun (2pc)",
+    "category": "dessert",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "sweet",
+      "traditional"
+    ],
+    "source_cuisine": "North Indian"
+  },
+  {
+    "idx": 16,
+    "name": "Rasmalai",
+    "category": "dessert",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "sweet",
+      "rich"
+    ],
+    "source_cuisine": "North Indian"
+  },
+  {
+    "idx": 17,
+    "name": "Gajar Ka Halwa",
+    "category": "dessert",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "sweet",
+      "seasonal"
+    ],
+    "source_cuisine": "North Indian"
+  },
+  {
+    "idx": 18,
+    "name": "Kheer",
+    "category": "dessert",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "sweet",
+      "traditional"
+    ],
+    "source_cuisine": "North Indian"
+  },
+  {
+    "idx": 19,
+    "name": "Paneer Tikka",
+    "category": "appetizer",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "grilled"
+    ],
+    "source_cuisine": "North Indian"
+  },
+  {
+    "idx": 20,
+    "name": "Hara Bhara Kebab",
+    "category": "appetizer",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "healthy"
+    ],
+    "source_cuisine": "North Indian"
+  },
+  {
+    "idx": 21,
+    "name": "Chicken Seekh Kebab",
+    "category": "appetizer",
+    "price_bracket": "mid",
+    "is_veg": false,
+    "tags": [
+      "grilled"
+    ],
+    "source_cuisine": "North Indian"
+  },
+  {
+    "idx": 22,
+    "name": "Dahi Kebab",
+    "category": "appetizer",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "creamy"
+    ],
+    "source_cuisine": "North Indian"
+  },
+  {
+    "idx": 23,
+    "name": "Boondi Raita",
+    "category": "side",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "traditional"
+    ],
+    "source_cuisine": "Mughlai"
+  },
+  {
+    "idx": 24,
+    "name": "Sheermal",
+    "category": "bread",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "sweet",
+      "traditional"
+    ],
+    "source_cuisine": "Mughlai"
+  },
+  {
+    "idx": 25,
+    "name": "Roomali Roti",
+    "category": "bread",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "traditional"
+    ],
+    "source_cuisine": "Mughlai"
+  },
+  {
+    "idx": 26,
+    "name": "Thandai",
+    "category": "beverage",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "traditional",
+      "cooling"
+    ],
+    "source_cuisine": "Mughlai"
+  },
+  {
+    "idx": 27,
+    "name": "Rose Sharbat",
+    "category": "beverage",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "sweet",
+      "refreshing"
+    ],
+    "source_cuisine": "Mughlai"
+  },
+  {
+    "idx": 28,
+    "name": "Shahi Tukda",
+    "category": "dessert",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "sweet",
+      "rich"
+    ],
+    "source_cuisine": "Mughlai"
+  },
+  {
+    "idx": 29,
+    "name": "Phirni",
+    "category": "dessert",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "sweet",
+      "traditional"
+    ],
+    "source_cuisine": "Mughlai"
+  },
+  {
+    "idx": 30,
+    "name": "Kulfi Falooda",
+    "category": "dessert",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "sweet",
+      "cold"
+    ],
+    "source_cuisine": "Mughlai"
+  },
+  {
+    "idx": 31,
+    "name": "Galouti Kebab",
+    "category": "appetizer",
+    "price_bracket": "mid",
+    "is_veg": false,
+    "tags": [
+      "melt_in_mouth"
+    ],
+    "source_cuisine": "Mughlai"
+  },
+  {
+    "idx": 32,
+    "name": "Seekh Kebab (4pc)",
+    "category": "appetizer",
+    "price_bracket": "mid",
+    "is_veg": false,
+    "tags": [
+      "grilled"
+    ],
+    "source_cuisine": "Mughlai"
+  },
+  {
+    "idx": 33,
+    "name": "Mutton Shammi",
+    "category": "appetizer",
+    "price_bracket": "mid",
+    "is_veg": false,
+    "tags": [
+      "traditional"
+    ],
+    "source_cuisine": "Mughlai"
+  },
+  {
+    "idx": 34,
+    "name": "Amritsari Kulcha",
+    "category": "bread",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "popular",
+      "stuffed"
+    ],
+    "source_cuisine": "Punjabi"
+  },
+  {
+    "idx": 35,
+    "name": "Paratha",
+    "category": "bread",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "traditional"
+    ],
+    "source_cuisine": "Punjabi"
+  },
+  {
+    "idx": 36,
+    "name": "Tandoori Chicken",
+    "category": "appetizer",
+    "price_bracket": "mid",
+    "is_veg": false,
+    "tags": [
+      "grilled",
+      "popular"
+    ],
+    "source_cuisine": "Punjabi"
+  },
+  {
+    "idx": 37,
+    "name": "Amritsari Fish Fry",
+    "category": "appetizer",
+    "price_bracket": "mid",
+    "is_veg": false,
+    "tags": [
+      "fried"
+    ],
+    "source_cuisine": "Punjabi"
+  },
+  {
+    "idx": 38,
+    "name": "Sambhar",
+    "category": "side",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "traditional",
+      "essential"
+    ],
+    "source_cuisine": "South Indian"
+  },
+  {
+    "idx": 39,
+    "name": "Coconut Chutney",
+    "category": "side",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "traditional"
+    ],
+    "source_cuisine": "South Indian"
+  },
+  {
+    "idx": 40,
+    "name": "Tomato Chutney",
+    "category": "side",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "tangy"
+    ],
+    "source_cuisine": "South Indian"
+  },
+  {
+    "idx": 41,
+    "name": "Mint Chutney",
+    "category": "side",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "fresh"
+    ],
+    "source_cuisine": "South Indian"
+  },
+  {
+    "idx": 42,
+    "name": "Podi",
+    "category": "side",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "spicy"
+    ],
+    "source_cuisine": "South Indian"
+  },
+  {
+    "idx": 43,
+    "name": "Filter Coffee",
+    "category": "beverage",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "traditional",
+      "hot",
+      "popular"
+    ],
+    "source_cuisine": "South Indian"
+  },
+  {
+    "idx": 44,
+    "name": "Buttermilk",
+    "category": "beverage",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "cooling"
+    ],
+    "source_cuisine": "South Indian"
+  },
+  {
+    "idx": 45,
+    "name": "Rasam",
+    "category": "beverage",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "traditional",
+      "hot"
+    ],
+    "source_cuisine": "South Indian"
+  },
+  {
+    "idx": 46,
+    "name": "Payasam",
+    "category": "dessert",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "sweet",
+      "traditional"
+    ],
+    "source_cuisine": "South Indian"
+  },
+  {
+    "idx": 47,
+    "name": "Mysore Pak",
+    "category": "dessert",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "sweet"
+    ],
+    "source_cuisine": "South Indian"
+  },
+  {
+    "idx": 48,
+    "name": "Kesari Bath",
+    "category": "dessert",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "sweet"
+    ],
+    "source_cuisine": "South Indian"
+  },
+  {
+    "idx": 49,
+    "name": "Medu Vada",
+    "category": "appetizer",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "crispy",
+      "popular"
+    ],
+    "source_cuisine": "South Indian"
+  },
+  {
+    "idx": 50,
+    "name": "Bonda",
+    "category": "appetizer",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "snack"
+    ],
+    "source_cuisine": "South Indian"
+  },
+  {
+    "idx": 51,
+    "name": "Bajji",
+    "category": "appetizer",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "fried"
+    ],
+    "source_cuisine": "South Indian"
+  },
+  {
+    "idx": 52,
+    "name": "Aloo Bhaja",
+    "category": "side",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "fried",
+      "traditional"
+    ],
+    "source_cuisine": "Bengali"
+  },
+  {
+    "idx": 53,
+    "name": "Begun Bhaja",
+    "category": "side",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "fried"
+    ],
+    "source_cuisine": "Bengali"
+  },
+  {
+    "idx": 54,
+    "name": "Salad",
+    "category": "side",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "fresh"
+    ],
+    "source_cuisine": "Bengali"
+  },
+  {
+    "idx": 55,
+    "name": "Papad",
+    "category": "side",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "crunchy"
+    ],
+    "source_cuisine": "Bengali"
+  },
+  {
+    "idx": 56,
+    "name": "Luchi",
+    "category": "bread",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "traditional",
+      "popular"
+    ],
+    "source_cuisine": "Bengali"
+  },
+  {
+    "idx": 57,
+    "name": "Ghol (Buttermilk)",
+    "category": "beverage",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "cooling"
+    ],
+    "source_cuisine": "Bengali"
+  },
+  {
+    "idx": 58,
+    "name": "Aam Panna",
+    "category": "beverage",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "refreshing"
+    ],
+    "source_cuisine": "Bengali"
+  },
+  {
+    "idx": 59,
+    "name": "Mishti Doi",
+    "category": "dessert",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "sweet",
+      "traditional",
+      "popular"
+    ],
+    "source_cuisine": "Bengali"
+  },
+  {
+    "idx": 60,
+    "name": "Rasgulla (2pc)",
+    "category": "dessert",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "sweet",
+      "traditional"
+    ],
+    "source_cuisine": "Bengali"
+  },
+  {
+    "idx": 61,
+    "name": "Sandesh",
+    "category": "dessert",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "sweet",
+      "traditional"
+    ],
+    "source_cuisine": "Bengali"
+  },
+  {
+    "idx": 62,
+    "name": "Payesh",
+    "category": "dessert",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "sweet"
+    ],
+    "source_cuisine": "Bengali"
+  },
+  {
+    "idx": 63,
+    "name": "Fish Fry",
+    "category": "appetizer",
+    "price_bracket": "mid",
+    "is_veg": false,
+    "tags": [
+      "fried",
+      "popular"
+    ],
+    "source_cuisine": "Bengali"
+  },
+  {
+    "idx": 64,
+    "name": "Chop (Cutlet)",
+    "category": "appetizer",
+    "price_bracket": "mid",
+    "is_veg": false,
+    "tags": [
+      "fried"
+    ],
+    "source_cuisine": "Bengali"
+  },
+  {
+    "idx": 65,
+    "name": "Beguni",
+    "category": "appetizer",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "fried"
+    ],
+    "source_cuisine": "Bengali"
+  },
+  {
+    "idx": 66,
+    "name": "Kachumber Salad",
+    "category": "side",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "fresh"
+    ],
+    "source_cuisine": "Gujarati"
+  },
+  {
+    "idx": 67,
+    "name": "Pickle",
+    "category": "side",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "tangy"
+    ],
+    "source_cuisine": "Gujarati"
+  },
+  {
+    "idx": 68,
+    "name": "Roti",
+    "category": "bread",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "essential"
+    ],
+    "source_cuisine": "Gujarati"
+  },
+  {
+    "idx": 69,
+    "name": "Puri",
+    "category": "bread",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "traditional"
+    ],
+    "source_cuisine": "Gujarati"
+  },
+  {
+    "idx": 70,
+    "name": "Thepla",
+    "category": "bread",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "popular"
+    ],
+    "source_cuisine": "Gujarati"
+  },
+  {
+    "idx": 71,
+    "name": "Chaas (Buttermilk)",
+    "category": "beverage",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "cooling",
+      "essential"
+    ],
+    "source_cuisine": "Gujarati"
+  },
+  {
+    "idx": 72,
+    "name": "Aam Ras",
+    "category": "beverage",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "seasonal",
+      "sweet"
+    ],
+    "source_cuisine": "Gujarati"
+  },
+  {
+    "idx": 73,
+    "name": "Shrikhand",
+    "category": "dessert",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "sweet",
+      "traditional",
+      "popular"
+    ],
+    "source_cuisine": "Gujarati"
+  },
+  {
+    "idx": 74,
+    "name": "Basundi",
+    "category": "dessert",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "sweet",
+      "rich"
+    ],
+    "source_cuisine": "Gujarati"
+  },
+  {
+    "idx": 75,
+    "name": "Mohanthal",
+    "category": "dessert",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "sweet"
+    ],
+    "source_cuisine": "Gujarati"
+  },
+  {
+    "idx": 76,
+    "name": "Dhokla",
+    "category": "appetizer",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "steamed",
+      "popular"
+    ],
+    "source_cuisine": "Gujarati"
+  },
+  {
+    "idx": 77,
+    "name": "Khandvi",
+    "category": "appetizer",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "traditional"
+    ],
+    "source_cuisine": "Gujarati"
+  },
+  {
+    "idx": 78,
+    "name": "Fafda",
+    "category": "appetizer",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "crunchy"
+    ],
+    "source_cuisine": "Gujarati"
+  },
+  {
+    "idx": 79,
+    "name": "Pickle (Achaar)",
+    "category": "side",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "spicy"
+    ],
+    "source_cuisine": "Rajasthani"
+  },
+  {
+    "idx": 80,
+    "name": "Bati",
+    "category": "bread",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "traditional",
+      "essential"
+    ],
+    "source_cuisine": "Rajasthani"
+  },
+  {
+    "idx": 81,
+    "name": "Chaach",
+    "category": "beverage",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "cooling",
+      "essential"
+    ],
+    "source_cuisine": "Rajasthani"
+  },
+  {
+    "idx": 82,
+    "name": "Keri Ka Panna",
+    "category": "beverage",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "refreshing"
+    ],
+    "source_cuisine": "Rajasthani"
+  },
+  {
+    "idx": 83,
+    "name": "Ghevar",
+    "category": "dessert",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "sweet",
+      "traditional"
+    ],
+    "source_cuisine": "Rajasthani"
+  },
+  {
+    "idx": 84,
+    "name": "Malpua",
+    "category": "dessert",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "sweet"
+    ],
+    "source_cuisine": "Rajasthani"
+  },
+  {
+    "idx": 85,
+    "name": "Churma Ladoo",
+    "category": "dessert",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "sweet",
+      "traditional"
+    ],
+    "source_cuisine": "Rajasthani"
+  },
+  {
+    "idx": 86,
+    "name": "Mirchi Vada",
+    "category": "appetizer",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "fried",
+      "spicy"
+    ],
+    "source_cuisine": "Rajasthani"
+  },
+  {
+    "idx": 87,
+    "name": "Pyaaz Kachori",
+    "category": "appetizer",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "crunchy",
+      "popular"
+    ],
+    "source_cuisine": "Rajasthani"
+  },
+  {
+    "idx": 88,
+    "name": "Dal Kachori",
+    "category": "appetizer",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "traditional"
+    ],
+    "source_cuisine": "Rajasthani"
+  },
+  {
+    "idx": 89,
+    "name": "Mirchi Ka Salan",
+    "category": "side",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "spicy",
+      "traditional"
+    ],
+    "source_cuisine": "Biryani Specialist"
+  },
+  {
+    "idx": 90,
+    "name": "Masala Papad",
+    "category": "side",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "crunchy"
+    ],
+    "source_cuisine": "Biryani Specialist"
+  },
+  {
+    "idx": 91,
+    "name": "Dahi Chutney",
+    "category": "side",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "cooling"
+    ],
+    "source_cuisine": "Biryani Specialist"
+  },
+  {
+    "idx": 92,
+    "name": "Mineral Water 1L",
+    "category": "beverage",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [],
+    "source_cuisine": "Biryani Specialist"
+  },
+  {
+    "idx": 93,
+    "name": "Double Ka Meetha",
+    "category": "dessert",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "sweet",
+      "hyderabadi"
+    ],
+    "source_cuisine": "Biryani Specialist"
+  },
+  {
+    "idx": 94,
+    "name": "Qubani Ka Meetha",
+    "category": "dessert",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "sweet",
+      "hyderabadi"
+    ],
+    "source_cuisine": "Biryani Specialist"
+  },
+  {
+    "idx": 95,
+    "name": "Chicken 65",
+    "category": "appetizer",
+    "price_bracket": "mid",
+    "is_veg": false,
+    "tags": [
+      "fried",
+      "spicy"
+    ],
+    "source_cuisine": "Biryani Specialist"
+  },
+  {
+    "idx": 96,
+    "name": "Paneer 65",
+    "category": "appetizer",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "fried",
+      "spicy"
+    ],
+    "source_cuisine": "Biryani Specialist"
+  },
+  {
+    "idx": 97,
+    "name": "Tangdi Kebab",
+    "category": "appetizer",
+    "price_bracket": "mid",
+    "is_veg": false,
+    "tags": [
+      "grilled"
+    ],
+    "source_cuisine": "Biryani Specialist"
+  },
+  {
+    "idx": 98,
+    "name": "Spring Rolls",
+    "category": "side",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "crispy"
+    ],
+    "source_cuisine": "Chinese"
+  },
+  {
+    "idx": 99,
+    "name": "Honey Chilli Potato",
+    "category": "side",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "sweet_spicy"
+    ],
+    "source_cuisine": "Chinese"
+  },
+  {
+    "idx": 100,
+    "name": "French Fries",
+    "category": "side",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "popular"
+    ],
+    "source_cuisine": "Chinese"
+  },
+  {
+    "idx": 101,
+    "name": "Chilli Paneer Dry",
+    "category": "side",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "popular"
+    ],
+    "source_cuisine": "Chinese"
+  },
+  {
+    "idx": 102,
+    "name": "Iced Tea",
+    "category": "beverage",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "cold"
+    ],
+    "source_cuisine": "Chinese"
+  },
+  {
+    "idx": 103,
+    "name": "Lemon Soda",
+    "category": "beverage",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "refreshing"
+    ],
+    "source_cuisine": "Chinese"
+  },
+  {
+    "idx": 104,
+    "name": "Virgin Mojito",
+    "category": "beverage",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "refreshing"
+    ],
+    "source_cuisine": "Chinese"
+  },
+  {
+    "idx": 105,
+    "name": "Brownie with Ice Cream",
+    "category": "dessert",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "sweet"
+    ],
+    "source_cuisine": "Chinese"
+  },
+  {
+    "idx": 106,
+    "name": "Ice Cream Sundae",
+    "category": "dessert",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "sweet",
+      "cold"
+    ],
+    "source_cuisine": "Chinese"
+  },
+  {
+    "idx": 107,
+    "name": "Fried Ice Cream",
+    "category": "dessert",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "sweet"
+    ],
+    "source_cuisine": "Chinese"
+  },
+  {
+    "idx": 108,
+    "name": "Hot and Sour Soup",
+    "category": "appetizer",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "soup",
+      "traditional"
+    ],
+    "source_cuisine": "Chinese"
+  },
+  {
+    "idx": 109,
+    "name": "Manchow Soup",
+    "category": "appetizer",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "soup"
+    ],
+    "source_cuisine": "Chinese"
+  },
+  {
+    "idx": 110,
+    "name": "Crispy Corn",
+    "category": "appetizer",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "crunchy"
+    ],
+    "source_cuisine": "Chinese"
+  },
+  {
+    "idx": 111,
+    "name": "Dim Sum (4pc)",
+    "category": "appetizer",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "steamed"
+    ],
+    "source_cuisine": "Chinese"
+  },
+  {
+    "idx": 112,
+    "name": "Garlic Bread",
+    "category": "side",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "popular"
+    ],
+    "source_cuisine": "Continental"
+  },
+  {
+    "idx": 113,
+    "name": "Caesar Salad",
+    "category": "side",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "healthy"
+    ],
+    "source_cuisine": "Continental"
+  },
+  {
+    "idx": 114,
+    "name": "Coleslaw",
+    "category": "side",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "fresh"
+    ],
+    "source_cuisine": "Continental"
+  },
+  {
+    "idx": 115,
+    "name": "Mashed Potatoes",
+    "category": "side",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "creamy"
+    ],
+    "source_cuisine": "Continental"
+  },
+  {
+    "idx": 116,
+    "name": "Cold Coffee",
+    "category": "beverage",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "cold",
+      "popular"
+    ],
+    "source_cuisine": "Continental"
+  },
+  {
+    "idx": 117,
+    "name": "Lemonade",
+    "category": "beverage",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "refreshing"
+    ],
+    "source_cuisine": "Continental"
+  },
+  {
+    "idx": 118,
+    "name": "Brownie",
+    "category": "dessert",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "sweet"
+    ],
+    "source_cuisine": "Continental"
+  },
+  {
+    "idx": 119,
+    "name": "Tiramisu",
+    "category": "dessert",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "sweet",
+      "premium"
+    ],
+    "source_cuisine": "Continental"
+  },
+  {
+    "idx": 120,
+    "name": "Chocolate Mousse",
+    "category": "dessert",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "sweet"
+    ],
+    "source_cuisine": "Continental"
+  },
+  {
+    "idx": 121,
+    "name": "Cheesecake",
+    "category": "dessert",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "sweet",
+      "premium"
+    ],
+    "source_cuisine": "Continental"
+  },
+  {
+    "idx": 122,
+    "name": "Bruschetta",
+    "category": "appetizer",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "starter"
+    ],
+    "source_cuisine": "Continental"
+  },
+  {
+    "idx": 123,
+    "name": "Soup of the Day",
+    "category": "appetizer",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "soup"
+    ],
+    "source_cuisine": "Continental"
+  },
+  {
+    "idx": 124,
+    "name": "Nachos with Salsa",
+    "category": "appetizer",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "crunchy"
+    ],
+    "source_cuisine": "Continental"
+  },
+  {
+    "idx": 125,
+    "name": "French Fries (M)",
+    "category": "side",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "popular"
+    ],
+    "source_cuisine": "Fast Food"
+  },
+  {
+    "idx": 126,
+    "name": "Onion Rings",
+    "category": "side",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "crispy"
+    ],
+    "source_cuisine": "Fast Food"
+  },
+  {
+    "idx": 127,
+    "name": "Hash Brown",
+    "category": "side",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "crispy"
+    ],
+    "source_cuisine": "Fast Food"
+  },
+  {
+    "idx": 128,
+    "name": "Potato Wedges",
+    "category": "side",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "crispy"
+    ],
+    "source_cuisine": "Fast Food"
+  },
+  {
+    "idx": 129,
+    "name": "Coke (M)",
+    "category": "beverage",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "popular"
+    ],
+    "source_cuisine": "Fast Food"
+  },
+  {
+    "idx": 130,
+    "name": "Pepsi (M)",
+    "category": "beverage",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "popular"
+    ],
+    "source_cuisine": "Fast Food"
+  },
+  {
+    "idx": 131,
+    "name": "Chocolate Shake",
+    "category": "beverage",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "sweet"
+    ],
+    "source_cuisine": "Fast Food"
+  },
+  {
+    "idx": 132,
+    "name": "McFlurry",
+    "category": "dessert",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "sweet",
+      "cold"
+    ],
+    "source_cuisine": "Fast Food"
+  },
+  {
+    "idx": 133,
+    "name": "Sundae",
+    "category": "dessert",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "sweet"
+    ],
+    "source_cuisine": "Fast Food"
+  },
+  {
+    "idx": 134,
+    "name": "Chocolate Cookie",
+    "category": "dessert",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "sweet"
+    ],
+    "source_cuisine": "Fast Food"
+  },
+  {
+    "idx": 135,
+    "name": "Chicken Nuggets",
+    "category": "appetizer",
+    "price_bracket": "mid",
+    "is_veg": false,
+    "tags": [
+      "fried"
+    ],
+    "source_cuisine": "Fast Food"
+  },
+  {
+    "idx": 136,
+    "name": "Veg Strips",
+    "category": "appetizer",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "fried"
+    ],
+    "source_cuisine": "Fast Food"
+  },
+  {
+    "idx": 137,
+    "name": "Cheese Balls",
+    "category": "appetizer",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "fried",
+      "popular"
+    ],
+    "source_cuisine": "Fast Food"
+  },
+  {
+    "idx": 138,
+    "name": "Green Chutney",
+    "category": "side",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "tangy"
+    ],
+    "source_cuisine": "Street Food"
+  },
+  {
+    "idx": 139,
+    "name": "Sev",
+    "category": "side",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "crunchy"
+    ],
+    "source_cuisine": "Street Food"
+  },
+  {
+    "idx": 140,
+    "name": "Masala Soda",
+    "category": "beverage",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "refreshing"
+    ],
+    "source_cuisine": "Street Food"
+  },
+  {
+    "idx": 141,
+    "name": "Cutting Chai",
+    "category": "beverage",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "hot",
+      "traditional"
+    ],
+    "source_cuisine": "Street Food"
+  },
+  {
+    "idx": 142,
+    "name": "Kulfi",
+    "category": "dessert",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "sweet",
+      "cold"
+    ],
+    "source_cuisine": "Street Food"
+  },
+  {
+    "idx": 143,
+    "name": "Rabdi",
+    "category": "dessert",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "sweet"
+    ],
+    "source_cuisine": "Street Food"
+  },
+  {
+    "idx": 144,
+    "name": "Jalebi (2pc)",
+    "category": "dessert",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "sweet",
+      "traditional"
+    ],
+    "source_cuisine": "Street Food"
+  },
+  {
+    "idx": 145,
+    "name": "Pani Puri",
+    "category": "appetizer",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "popular"
+    ],
+    "source_cuisine": "Street Food"
+  },
+  {
+    "idx": 146,
+    "name": "Bhel Puri",
+    "category": "appetizer",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "popular",
+      "tangy"
+    ],
+    "source_cuisine": "Street Food"
+  },
+  {
+    "idx": 147,
+    "name": "Samosa (2pc)",
+    "category": "appetizer",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "popular"
+    ],
+    "source_cuisine": "Street Food"
+  },
+  {
+    "idx": 148,
+    "name": "Vada Pav",
+    "category": "appetizer",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "popular",
+      "mumbai"
+    ],
+    "source_cuisine": "Street Food"
+  },
+  {
+    "idx": 149,
+    "name": "Hot Chocolate",
+    "category": "beverage",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "hot",
+      "sweet"
+    ],
+    "source_cuisine": "Dessert"
+  },
+  {
+    "idx": 150,
+    "name": "Cappuccino",
+    "category": "beverage",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "hot"
+    ],
+    "source_cuisine": "Dessert"
+  },
+  {
+    "idx": 151,
+    "name": "Waffle with Ice Cream",
+    "category": "dessert",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "sweet"
+    ],
+    "source_cuisine": "Dessert"
+  },
+  {
+    "idx": 152,
+    "name": "Cookie (2pc)",
+    "category": "dessert",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "sweet"
+    ],
+    "source_cuisine": "Dessert"
+  },
+  {
+    "idx": 153,
+    "name": "Pastry",
+    "category": "dessert",
+    "price_bracket": "mid",
+    "is_veg": true,
+    "tags": [
+      "sweet"
+    ],
+    "source_cuisine": "Dessert"
+  },
+  {
+    "idx": 154,
+    "name": "Green Salad",
+    "category": "side",
+    "price_bracket": "low",
+    "is_veg": true,
+    "tags": [
+      "healthy"
+    ],
+    "source_cuisine": "universal"
+  }
+]

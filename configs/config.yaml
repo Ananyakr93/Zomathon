@@ -50,4 +50,4 @@ serving:
   port: 8000
   workers: 1
   latency_budget_ms: 200
-  top_n_default: 5
+  top_n_default: 10
