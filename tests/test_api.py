@@ -12,6 +12,9 @@ from src.serving.app import app
 
 @pytest.mark.asyncio
 async def test_health():
+    # Load pipeline so it returns status="ok"
+    from src.serving.app import pipeline
+    pipeline.load()
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         resp = await client.get("/health")
@@ -21,8 +24,10 @@ async def test_health():
 
 
 @pytest.mark.asyncio
-async def test_recommend_stub_returns_503():
-    """Before pipeline is implemented, /recommend should return 503."""
+async def test_recommend_returns_200():
+    """/recommend should return 200 and a list of recommendations."""
+    from src.serving.app import pipeline
+    pipeline.load()
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         resp = await client.post("/recommend", json={
@@ -31,4 +36,4 @@ async def test_recommend_stub_returns_503():
             ],
             "top_n": 3,
         })
-        assert resp.status_code == 503
+        assert resp.status_code == 200

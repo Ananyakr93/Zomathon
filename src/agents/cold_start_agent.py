@@ -24,7 +24,9 @@ Usage:
 
 from __future__ import annotations
 
+import json
 import math
+import re
 from typing import Any
 
 
@@ -429,6 +431,39 @@ class ColdStartAgent:
             cuisine, meal_type, cart_cats, menu, cart_names,
         )
 
+        slm_available = hasattr(self, "_slm") and self._slm is not None and getattr(self._slm, "available", False)
+        if slm_available:
+            if cold_start_type == "new_user":
+                prompt = f"Given a {cuisine} {meal_type} in {city}, with cart: {cart_names}, what else would they order?"
+                resp = self._slm.generate(prompt)
+                items = self._parse_slm_item_list(resp)
+                for item_name in items:
+                    raw_candidates.append({
+                        "name": item_name,
+                        "category": "side",
+                        "price": 100,
+                        "is_veg": True,
+                        "tags": [],
+                        "source": "cuisine_knowledge",
+                        "source_priority": 0.8,
+                        "popularity_score": 0.8,
+                    })
+            elif cold_start_type == "new_restaurant" and menu:
+                prompt = f"Analyze this restaurant menu: {menu}. Cart has: {cart_names}. What complements?"
+                resp = self._slm.generate(prompt)
+                items = self._parse_slm_item_list(resp)
+                for item_name in items:
+                    raw_candidates.append({
+                        "name": item_name,
+                        "category": "side",
+                        "price": 100,
+                        "is_veg": True,
+                        "tags": [],
+                        "source": "restaurant_menu",
+                        "source_priority": 0.9,
+                        "popularity_score": 0.8,
+                    })
+
         # ── Step 2: Score each candidate ─────────────────────────────────────
         scored: list[dict] = []
         for cand in raw_candidates:
@@ -450,6 +485,16 @@ class ColdStartAgent:
         scored.sort(key=lambda x: -x["confidence"])
         final = self._apply_diversity(scored, top_k)
 
+        if slm_available and final:
+            item_list_str = ", ".join([item["name"] for item in final])
+            prompt = f"Give reasons for recommending these items: {item_list_str}"
+            resp = self._slm.generate(prompt)
+            reasons = self._parse_slm_reasons(resp)
+            for item in final:
+                if item["name"] in reasons:
+                    item["reasoning"] = reasons[item["name"]]
+                    item["slm_enriched"] = True
+
         # Assign ranks
         for i, item in enumerate(final):
             item["rank"] = i + 1
@@ -462,7 +507,7 @@ class ColdStartAgent:
 
         return {
             "agent": "ColdStartRecommendationAgent",
-            "version": "1.0",
+            "version": "2.0",
             "cold_start_type": cold_start_type,
             "total_candidates_generated": len(raw_candidates),
             "total_after_filters": len(scored),
@@ -475,7 +520,8 @@ class ColdStartAgent:
                 "is_weekend": is_weekend,
                 "cart_value": total_cart_value,
                 "avg_item_price": round(avg_item_price),
-                "approach": "culinary_intelligence + contextual_heuristics",
+                "approach": "hybrid_cold_start_pipeline",
+                "slm_available": hasattr(self, "_slm") and self._slm is not None and getattr(self._slm, "available", False),
             },
         }
 
@@ -755,6 +801,37 @@ class ColdStartAgent:
                 break
 
         return final
+
+    # ── SLM PARSING LOGIC ───────────────────────────────────────────────────
+
+    @classmethod
+    def _parse_slm_item_list(cls, text: str) -> list[str]:
+        if not text:
+            return []
+        try:
+            match = re.search(r'\[.*?\]', text, re.DOTALL)
+            if match:
+                return json.loads(match.group(0))
+        except Exception:
+            pass
+        items = []
+        for line in text.split('\n'):
+            line = line.strip()
+            if line.startswith('-'):
+                items.append(line[1:].strip())
+        return items
+
+    @classmethod
+    def _parse_slm_reasons(cls, text: str) -> dict[str, str]:
+        if not text:
+            return {}
+        try:
+            match = re.search(r'\{.*?\}', text, re.DOTALL)
+            if match:
+                return json.loads(match.group(0))
+        except Exception:
+            pass
+        return {}
 
     # ── HELPERS ─────────────────────────────────────────────────────────────
 

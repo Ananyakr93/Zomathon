@@ -1,8 +1,8 @@
 {
   "model": "LightGBM_LambdaRank",
-  "n_train_rows": 3369,
-  "n_val_rows": 446,
-  "n_test_rows": 412,
+  "n_train_rows": 73,
+  "n_val_rows": 9,
+  "n_test_rows": 9,
   "n_features": 24,
   "feature_names": [
     "candidate_price",
@@ -30,9 +30,9 @@
     "is_weekend",
     "veg_match"
   ],
-  "best_iteration": 3,
-  "train_time_seconds": 0.22,
-  "test_ndcg_at_10": 0.6697,
-  "n_test_groups": 50,
-  "model_path": "C:\\Users\\Rishab Nayak\\Desktop\\Om\\Codes\\MealMind-Zomathon\\Zomathon\\models\\saved\\cart_ranker.txt"
+  "best_iteration": 1,
+  "train_time_seconds": 0.05,
+  "test_ndcg_at_10": 0.8486,
+  "n_test_groups": 1,
+  "model_path": "D:\\Zomathon\\models\\saved\\cart_ranker.txt"
 }

@@ -25,6 +25,7 @@ from .circuit_breaker import FallbackManager, CircuitState
 from .cache_manager import CacheManager
 from .monitoring import RequestTracer, MonitoringDashboard
 from .session_state import SessionStore
+from ..features.session_graph import PMIMatrix, SessionGraph
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +58,11 @@ class ServingOrchestrator:
         self.fallback = FallbackManager()
         self.monitor = MonitoringDashboard()
         self.sessions = SessionStore()
+        
+        # Load PMI Matrix once at startup (Stage 1 dependency)
+        logger.info("Initializing PMI Matrix for candidate generation...")
+        self.pmi_matrix = PMIMatrix.load()
+        
         self._executor = ThreadPoolExecutor(max_workers=8)
 
     # ── MAIN ENTRY POINT ───────────────────────────────────────────────────
@@ -310,28 +316,75 @@ class ServingOrchestrator:
 
         return features
 
-    def _generate_candidates(
-        self,
-        cart_items: list[dict],
-        restaurant: dict,
-        features: dict,
-    ) -> list[dict]:
+    def _generate_candidates(self, cart_items: list[dict], restaurant: dict, features: dict) -> list[dict]:
         """
-        Candidate generation via collaborative filtering.
-        In production: FAISS ANN lookup + graph PMI lookup (< 50ms).
-        Here we simulate with the restaurant menu / knowledge base.
+        Stage 1: Candidate Generation (Graph-Based Retrieval)
+        Builds a temporal session graph from the cart and traverses edges
+        to find highly connected candidates (speed: 10-15ms).
+        Falls back to ColdStartAgent if the cart is empty or graph yields 0.
         """
-        from ..agents.cold_start_agent import ColdStartAgent
+        # If cart is empty, we must rely entirely on Cold Start (new user / popular items)
+        if not cart_items:
+            from ..agents.cold_start_agent import ColdStartAgent
+            return ColdStartAgent().recommend(
+                cart_items=[], restaurant=restaurant, context={},
+                cold_start_type="new_user", top_k=20
+            ).get("recommendations", [])
 
-        agent = ColdStartAgent()
-        result = agent.recommend(
-            cart_items=cart_items,
-            restaurant=restaurant,
-            context={},
-            cold_start_type="new_user",
-            top_k=50,
-        )
-        return result.get("recommendations", [])
+        # 1. Build temporal session graph for current cart
+        graph = SessionGraph(pmi_matrix=self.pmi_matrix, decay_constant=3600.0)
+        for item in cart_items:
+            graph.add_item(item)
+
+        # 2. Score candidates by traversing graph edges
+        # get_candidate_scores inherently performs BFS-like aggregation 
+        # (summing weighted PMI edges from cart nodes to candidate nodes)
+        scored_candidates = graph.get_candidate_scores(top_k=20, min_score=0.01)
+
+        # 3. Assemble and enrich candidates
+        candidates = []
+        for cand in scored_candidates:
+            # We construct a mock "enriched" item. In a full system, we'd lookup 
+            # the item's static features (price, veg, category) from Redis here.
+            # We use rules-of-thumb mapping for the fallback/demo.
+            name = cand["name"].replace("_", " ").title()
+            
+            # Very basic category heuristic for demo:
+            cat = "side"
+            price = 100
+            if any(w in name.lower() for w in ["lassi", "coke", "tea", "coffee", "shake"]):
+                cat = "beverage"
+                price = 60
+            elif any(w in name.lower() for w in ["jamun", "brownie", "sundae", "ice cream", "sweet"]):
+                cat = "dessert"
+                price = 120
+            elif any(w in name.lower() for w in ["naan", "roti", "kulcha", "paratha", "bread"]):
+                cat = "bread"
+                price = 40
+            elif any(w in name.lower() for w in ["tikka", "kebab", "fries", "roll", "soup"]):
+                cat = "appetizer"
+                price = 150
+
+            candidates.append({
+                "item_id": cand["name"][:6],
+                "name": name,
+                "category": cat,
+                "price": price,
+                "is_veg": not any(w in name.lower() for w in ["chicken", "mutton", "fish"]),
+                "graph_score": cand["graph_score"],
+                "popularity_score": min(0.9, cand["graph_score"] * 2), # proxy
+                "margin_pct": 40 + (len(name) % 30), # mock margin
+            })
+
+        # 4. Fallback if graph yielded nothing (highly unusual cart)
+        if not candidates:
+            from ..agents.cold_start_agent import ColdStartAgent
+            candidates = ColdStartAgent().recommend(
+                cart_items=cart_items, restaurant=restaurant, context={},
+                cold_start_type="unusual_cart", top_k=20
+            ).get("recommendations", [])
+
+        return candidates[:20]
 
     def _llm_rerank(
         self,
@@ -341,22 +394,39 @@ class ServingOrchestrator:
         context: dict | None,
     ) -> list[dict]:
         """
-        LLM-powered re-ranking.
-        In production: Claude API call with structured prompt (< 150ms).
-        Here we simulate with the RerankerAgent.
+        Stage 3: LLM Re-Ranking (The AI Edge).
+        Reranks candidates using SLMRerankerAgent, with a resilient fallback
+        to the deterministic RerankerAgent if the SLM fails or times out.
         """
         from ..agents.meal_context_agent import MealContextAgent
         from ..agents.reranker_agent import RerankerAgent
+        from ..agents.slm_reranker_agent import SLMRerankerAgent
 
-        # Get meal context
+        ctx = context or {"meal_type": "dinner"}
+
+        # 1. Attempt SLM Re-ranking (Primary)
+        slm_agent = SLMRerankerAgent()
+        slm_ranked = slm_agent.rerank(
+            candidates=candidates,
+            cart_items=cart_items,
+            context=ctx,
+            user_preferences={"dietary_preference": "any"}
+        )
+
+        if slm_ranked is not None:
+            logger.info("SLM re-ranking successful.")
+            return slm_ranked
+
+        # 2. Resilient Fallback: Deterministic Re-ranking
+        logger.warning("SLM re-ranking failed, falling back to deterministic RerankerAgent.")
+        
         meal_agent = MealContextAgent()
         analysis = meal_agent.analyze(
             cart_items=cart_items,
             restaurant=restaurant,
-            context=context or {"meal_type": "dinner"},
+            context=ctx,
         )
 
-        # Re-rank
         reranker = RerankerAgent()
         cf_candidates = []
         for c in candidates:
@@ -367,8 +437,9 @@ class ServingOrchestrator:
                 "price": c.get("price", 0),
                 "is_veg": c.get("is_veg", True),
                 "popularity_score": c.get("popularity_score", c.get("confidence", 0.5)),
-                "margin_pct": 50,
+                "margin_pct": c.get("margin_pct", 50),
                 "tags": c.get("tags", []),
+                "graph_score": c.get("graph_score", 0.0),
             })
 
         result = reranker.rerank(
@@ -380,7 +451,7 @@ class ServingOrchestrator:
                 "max_same_category": 3,
                 "promoted_item_ids": [],
             },
-            top_k=10,
+            top_k=20,
         )
         return result.get("ranked_items", [])
 
