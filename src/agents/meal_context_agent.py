@@ -539,12 +539,35 @@ class MealContextAgent:
         else:
             cultural_fit = 0.75  # neutral
 
+        # ── LLM GENERATED INSIGHT ───────────────────────────────────────────
+        try:
+            from src.llm.llm_provider import get_llm
+            llm = get_llm()
+            
+            # Construct a prompt for the LLM based on the cart
+            items_str = ", ".join([i.get("name", "Unknown Item") for i in cart_items])
+            prompt = (
+                f"I have a Zomato cart with these items: {items_str}. "
+                f"The restaurant serves {cuisine} cuisine. "
+                "In 2 sentences, explain why these items go together culturally, "
+                "and suggest 1 perfect add-on item that would complete the meal."
+            )
+            
+            llm_response = llm.generate(prompt, max_tokens=100)
+            llm_insight = llm_response.text
+            llm_model_used = llm_response.model
+        except Exception as e:
+            llm_insight = "Cultural insight unavailable."
+            llm_model_used = "error"
+
         return {
             "cuisine": cuisine,
             "cultural_fit_score": round(cultural_fit, 2),
             "matched_typical_combos": matched_combos,
             "cultural_mismatches": detected_flags,
             "expected_meal_pattern": blueprint["complete_meal"],
+            "llm_insight": llm_insight,
+            "llm_model": llm_model_used,
         }
 
     # ── SECTION 4: RECOMMENDATION STRATEGY ──────────────────────────────────

@@ -33,11 +33,11 @@ EMBEDDINGS_DIR = PROJECT_ROOT / "data" / "embeddings"
 # Lazy-loaded model handle (avoids import-time download)
 _model = None
 
-
 def _get_model():
     """Lazy-load sentence-transformer model (CPU)."""
     global _model
     if _model is None:
+        import torch  # Fix for transformers NameError bug (nn is not defined)
         from sentence_transformers import SentenceTransformer
         _model = SentenceTransformer(
             "all-MiniLM-L6-v2",

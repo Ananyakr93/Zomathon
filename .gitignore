@@ -71,3 +71,12 @@ evaluation_results.json
 test_results.json
 out_architecture.json
 *.webp
+
+# ── Test / Debug artifacts ─────────────────────────────────
+test_meal_cases.py
+test_meal_results.json
+faiss_output*.txt
+int_results.txt
+
+# ── Gemini / Antigravity ──────────────────────────────────
+.gemini/

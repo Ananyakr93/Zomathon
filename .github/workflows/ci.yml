@@ -1,0 +1,110 @@
+# ══════════════════════════════════════════════════════════════════════════
+# CSAO — CI/CD Pipeline
+# Runs: lint, unit tests, integration tests, training pipeline, FAISS build
+# Triggers: push to main, pull requests
+# ══════════════════════════════════════════════════════════════════════════
+
+name: CSAO CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  # ── LINT ────────────────────────────────────────────────────────────────
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install dependencies
+        run: |
+          pip install ruff
+      - name: Lint with ruff
+        run: |
+          ruff check src/ --select E,F,W --ignore E501
+
+  # ── UNIT TESTS ─────────────────────────────────────────────────────────
+  test-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest
+      - name: Run unit tests
+        run: |
+          python -m pytest tests/ -v --tb=short
+
+  # ── INTEGRATION TEST ───────────────────────────────────────────────────
+  test-integration:
+    runs-on: ubuntu-latest
+    needs: test-unit
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+      - name: Run integration tests
+        run: |
+          python test_integration.py
+
+  # ── TRAINING PIPELINE ──────────────────────────────────────────────────
+  train:
+    runs-on: ubuntu-latest
+    needs: test-integration
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+      - name: Run training pipeline
+        run: |
+          python train_pipeline.py --n-scenarios 200
+      - name: Verify model artifact
+        run: |
+          test -f models/saved/cart_ranker.txt
+          test -f models/results/training_results.json
+          echo "Model artifacts verified"
+      - name: Upload model artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: trained-model
+          path: |
+            models/saved/cart_ranker.txt
+            models/results/training_results.json
+          retention-days: 30
+
+  # ── DOCKER BUILD ───────────────────────────────────────────────────────
+  docker:
+    runs-on: ubuntu-latest
+    needs: test-integration
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker image
+        run: |
+          docker build -t mealmind-csao:test .
+      - name: Health check
+        run: |
+          docker run -d --name csao -p 8000:8000 mealmind-csao:test
+          sleep 5
+          curl -f http://localhost:8000/health || exit 1
+          docker stop csao
+          echo "Docker health check passed"

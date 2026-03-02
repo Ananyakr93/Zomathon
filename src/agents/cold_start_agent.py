@@ -24,14 +24,8 @@ Usage:
 
 from __future__ import annotations
 
-import json
-import logging
 import math
 from typing import Any
-
-import numpy as np
-
-logger = logging.getLogger(__name__)
 
 
 # ── CUISINE COMPLEMENT KNOWLEDGE BASE ───────────────────────────────────────
@@ -43,112 +37,241 @@ _CUISINE_COMPLEMENTS: dict[str, dict[str, list[tuple]]] = {
         "side":      [("Raita",           "low",  True,  ["cooling"]),
                       ("Dal Makhani",     "mid",  True,  ["hearty", "traditional"]),
                       ("Onion Salad",     "low",  True,  ["fresh"]),
-                      ("Mix Veg",         "mid",  True,  ["healthy"])],
-        "bread":     [("Butter Naan",     "low",  True,  ["popular"]),
+                      ("Mix Veg",         "mid",  True,  ["healthy"]),
+                      ("Papad Masala",    "low",  True,  ["crunchy"])],
+        "bread":     [("Butter Naan",     "low",  True,  ["popular", "essential"]),
                       ("Garlic Naan",     "low",  True,  ["popular"]),
                       ("Tandoori Roti",   "low",  True,  ["healthy"]),
-                      ("Lachha Paratha",  "low",  True,  ["flaky"])],
+                      ("Lachha Paratha",  "low",  True,  ["flaky"]),
+                      ("Missi Roti",      "low",  True,  ["traditional"])],
         "beverage":  [("Lassi (Sweet)",   "low",  True,  ["cooling", "traditional"]),
+                      ("Masala Chaas",    "low",  True,  ["cooling"]),
+                      ("Coke 500ml",      "low",  True,  ["popular"]),
+                      ("Mango Lassi",     "mid",  True,  ["sweet"]),
+                      ("Nimbu Pani",      "low",  True,  ["refreshing"])],
+        "dessert":   [("Gulab Jamun (2pc)","low", True,  ["sweet", "traditional"]),
+                      ("Rasmalai",        "mid",  True,  ["sweet", "rich"]),
+                      ("Gajar Ka Halwa",  "mid",  True,  ["sweet", "seasonal"]),
+                      ("Kheer",           "mid",  True,  ["sweet", "traditional"])],
+        "appetizer": [("Paneer Tikka",    "mid",  True,  ["grilled"]),
+                      ("Hara Bhara Kebab","mid",  True,  ["healthy"]),
+                      ("Chicken Seekh Kebab","mid",False,["grilled"]),
+                      ("Dahi Kebab",      "mid",  True,  ["creamy"])],
+    },
+    "Mughlai": {
+        "side":      [("Raita",           "low",  True,  ["cooling", "essential"]),
+                      ("Onion Salad",     "low",  True,  ["fresh"]),
+                      ("Boondi Raita",    "low",  True,  ["traditional"])],
+        "bread":     [("Butter Naan",     "low",  True,  ["popular", "essential"]),
+                      ("Sheermal",        "mid",  True,  ["sweet", "traditional"]),
+                      ("Roomali Roti",    "low",  True,  ["traditional"]),
+                      ("Garlic Naan",     "low",  True,  ["popular"])],
+        "beverage":  [("Thandai",         "mid",  True,  ["traditional", "cooling"]),
+                      ("Rose Sharbat",    "low",  True,  ["sweet", "refreshing"]),
+                      ("Lassi (Sweet)",   "low",  True,  ["cooling"]),
+                      ("Coke 500ml",      "low",  True,  ["popular"])],
+        "dessert":   [("Shahi Tukda",     "mid",  True,  ["sweet", "rich"]),
+                      ("Phirni",          "mid",  True,  ["sweet", "traditional"]),
+                      ("Kulfi Falooda",   "mid",  True,  ["sweet", "cold"]),
+                      ("Gulab Jamun (2pc)","low", True,  ["sweet"])],
+        "appetizer": [("Galouti Kebab",   "mid",  False, ["melt_in_mouth"]),
+                      ("Seekh Kebab (4pc)","mid", False, ["grilled"]),
+                      ("Mutton Shammi",   "mid",  False, ["traditional"]),
+                      ("Paneer Tikka",    "mid",  True,  ["grilled"])],
+    },
+    "Punjabi": {
+        "side":      [("Raita",           "low",  True,  ["cooling"]),
+                      ("Onion Salad",     "low",  True,  ["fresh"]),
+                      ("Papad Masala",    "low",  True,  ["crunchy"]),
+                      ("Boondi Raita",    "low",  True,  ["traditional"])],
+        "bread":     [("Butter Naan",     "low",  True,  ["popular", "essential"]),
+                      ("Amritsari Kulcha","mid",  True,  ["popular", "stuffed"]),
+                      ("Tandoori Roti",   "low",  True,  ["healthy"]),
+                      ("Paratha",         "low",  True,  ["traditional"])],
+        "beverage":  [("Lassi (Sweet)",   "low",  True,  ["popular", "essential"]),
                       ("Masala Chaas",    "low",  True,  ["cooling"]),
                       ("Coke 500ml",      "low",  True,  ["popular"]),
                       ("Mango Lassi",     "mid",  True,  ["sweet"])],
         "dessert":   [("Gulab Jamun (2pc)","low", True,  ["sweet", "traditional"]),
                       ("Rasmalai",        "mid",  True,  ["sweet", "rich"]),
-                      ("Gajar Ka Halwa",  "mid",  True,  ["sweet", "seasonal"])],
-        "appetizer": [("Paneer Tikka",    "mid",  True,  ["grilled"]),
-                      ("Hara Bhara Kebab","mid",  True,  ["healthy"]),
-                      ("Chicken Seekh Kebab","mid",False,["grilled"])],
+                      ("Phirni",          "mid",  True,  ["sweet"])],
+        "appetizer": [("Tandoori Chicken","mid",  False, ["grilled", "popular"]),
+                      ("Amritsari Fish Fry","mid",False, ["fried"]),
+                      ("Paneer Tikka",    "mid",  True,  ["grilled"])],
     },
     "South Indian": {
-        "side":      [("Sambhar",         "low",  True,  ["traditional"]),
+        "side":      [("Sambhar",         "low",  True,  ["traditional", "essential"]),
                       ("Coconut Chutney", "low",  True,  ["traditional"]),
                       ("Tomato Chutney",  "low",  True,  ["tangy"]),
-                      ("Mint Chutney",    "low",  True,  ["fresh"])],
-        "beverage":  [("Filter Coffee",   "low",  True,  ["traditional", "hot"]),
+                      ("Mint Chutney",    "low",  True,  ["fresh"]),
+                      ("Podi",            "low",  True,  ["spicy"])],
+        "beverage":  [("Filter Coffee",   "low",  True,  ["traditional", "hot", "popular"]),
                       ("Buttermilk",      "low",  True,  ["cooling"]),
-                      ("Coke 500ml",      "low",  True,  ["popular"])],
+                      ("Coke 500ml",      "low",  True,  ["popular"]),
+                      ("Rasam",           "low",  True,  ["traditional", "hot"])],
         "dessert":   [("Payasam",         "mid",  True,  ["sweet", "traditional"]),
                       ("Mysore Pak",      "low",  True,  ["sweet"]),
-                      ("Kesari Bath",     "low",  True,  ["sweet"])],
-        "appetizer": [("Medu Vada",       "low",  True,  ["crispy"]),
-                      ("Bonda",           "low",  True,  ["snack"])],
+                      ("Kesari Bath",     "low",  True,  ["sweet"]),
+                      ("Gulab Jamun (2pc)","low", True,  ["sweet"])],
+        "appetizer": [("Medu Vada",       "low",  True,  ["crispy", "popular"]),
+                      ("Bonda",           "low",  True,  ["snack"]),
+                      ("Bajji",           "low",  True,  ["fried"])],
+    },
+    "Bengali": {
+        "side":      [("Aloo Bhaja",      "low",  True,  ["fried", "traditional"]),
+                      ("Begun Bhaja",     "low",  True,  ["fried"]),
+                      ("Salad",           "low",  True,  ["fresh"]),
+                      ("Papad",           "low",  True,  ["crunchy"])],
+        "bread":     [("Luchi",           "low",  True,  ["traditional", "popular"]),
+                      ("Paratha",         "low",  True,  ["traditional"])],
+        "beverage":  [("Ghol (Buttermilk)","low", True,  ["cooling"]),
+                      ("Aam Panna",       "low",  True,  ["refreshing"]),
+                      ("Coke 500ml",      "low",  True,  ["popular"])],
+        "dessert":   [("Mishti Doi",      "low",  True,  ["sweet", "traditional", "popular"]),
+                      ("Rasgulla (2pc)",  "low",  True,  ["sweet", "traditional"]),
+                      ("Sandesh",         "low",  True,  ["sweet", "traditional"]),
+                      ("Payesh",          "mid",  True,  ["sweet"])],
+        "appetizer": [("Fish Fry",        "mid",  False, ["fried", "popular"]),
+                      ("Chop (Cutlet)",   "mid",  False, ["fried"]),
+                      ("Beguni",          "low",  True,  ["fried"])],
+    },
+    "Gujarati": {
+        "side":      [("Kachumber Salad", "low",  True,  ["fresh"]),
+                      ("Papad",           "low",  True,  ["crunchy"]),
+                      ("Pickle",          "low",  True,  ["tangy"])],
+        "bread":     [("Roti",            "low",  True,  ["essential"]),
+                      ("Puri",            "low",  True,  ["traditional"]),
+                      ("Thepla",          "low",  True,  ["popular"])],
+        "beverage":  [("Chaas (Buttermilk)","low", True,  ["cooling", "essential"]),
+                      ("Coke 500ml",      "low",  True,  ["popular"]),
+                      ("Aam Ras",         "mid",  True,  ["seasonal", "sweet"])],
+        "dessert":   [("Shrikhand",       "mid",  True,  ["sweet", "traditional", "popular"]),
+                      ("Basundi",         "mid",  True,  ["sweet", "rich"]),
+                      ("Mohanthal",       "low",  True,  ["sweet"]),
+                      ("Gulab Jamun (2pc)","low", True,  ["sweet"])],
+        "appetizer": [("Dhokla",          "low",  True,  ["steamed", "popular"]),
+                      ("Khandvi",         "low",  True,  ["traditional"]),
+                      ("Fafda",           "low",  True,  ["crunchy"])],
+    },
+    "Rajasthani": {
+        "side":      [("Raita",           "low",  True,  ["cooling"]),
+                      ("Papad Masala",    "low",  True,  ["crunchy"]),
+                      ("Pickle (Achaar)", "low",  True,  ["spicy"])],
+        "bread":     [("Bati",            "mid",  True,  ["traditional", "essential"]),
+                      ("Missi Roti",      "low",  True,  ["traditional"]),
+                      ("Garlic Naan",     "low",  True,  ["popular"])],
+        "beverage":  [("Chaach",          "low",  True,  ["cooling", "essential"]),
+                      ("Keri Ka Panna",    "low",  True,  ["refreshing"]),
+                      ("Coke 500ml",      "low",  True,  ["popular"]),
+                      ("Lassi (Sweet)",   "low",  True,  ["cooling"])],
+        "dessert":   [("Ghevar",          "mid",  True,  ["sweet", "traditional"]),
+                      ("Malpua",          "mid",  True,  ["sweet"]),
+                      ("Churma Ladoo",    "mid",  True,  ["sweet", "traditional"]),
+                      ("Gulab Jamun (2pc)","low", True,  ["sweet"])],
+        "appetizer": [("Mirchi Vada",     "low",  True,  ["fried", "spicy"]),
+                      ("Pyaaz Kachori",   "low",  True,  ["crunchy", "popular"]),
+                      ("Dal Kachori",     "low",  True,  ["traditional"])],
     },
     "Biryani Specialist": {
         "side":      [("Raita",           "low",  True,  ["cooling", "essential"]),
                       ("Mirchi Ka Salan", "mid",  True,  ["spicy", "traditional"]),
                       ("Onion Salad",     "low",  True,  ["fresh"]),
-                      ("Masala Papad",    "low",  True,  ["crunchy"])],
+                      ("Masala Papad",    "low",  True,  ["crunchy"]),
+                      ("Dahi Chutney",    "low",  True,  ["cooling"])],
         "beverage":  [("Coke 500ml",      "low",  True,  ["popular"]),
                       ("Lassi (Sweet)",   "low",  True,  ["cooling"]),
-                      ("Mineral Water 1L","low",  True,  [])],
+                      ("Mineral Water 1L","low",  True,  []),
+                      ("Masala Chaas",    "low",  True,  ["cooling"])],
         "dessert":   [("Gulab Jamun (2pc)","low", True,  ["sweet", "traditional"]),
                       ("Phirni",          "mid",  True,  ["sweet", "traditional"]),
-                      ("Double Ka Meetha","mid",  True,  ["sweet", "hyderabadi"])],
+                      ("Double Ka Meetha","mid",  True,  ["sweet", "hyderabadi"]),
+                      ("Qubani Ka Meetha","mid",  True,  ["sweet", "hyderabadi"])],
         "appetizer": [("Seekh Kebab (4pc)","mid", False, ["grilled"]),
                       ("Chicken 65",      "mid",  False, ["fried", "spicy"]),
-                      ("Paneer 65",       "mid",  True,  ["fried", "spicy"])],
+                      ("Paneer 65",       "mid",  True,  ["fried", "spicy"]),
+                      ("Tangdi Kebab",    "mid",  False, ["grilled"])],
     },
     "Chinese": {
         "side":      [("Spring Rolls",    "mid",  True,  ["crispy"]),
                       ("Honey Chilli Potato","mid",True,  ["sweet_spicy"]),
-                      ("French Fries",    "low",  True,  ["popular"])],
+                      ("French Fries",    "low",  True,  ["popular"]),
+                      ("Chilli Paneer Dry","mid",  True, ["popular"])],
         "beverage":  [("Coke 500ml",      "low",  True,  ["popular"]),
                       ("Iced Tea",        "low",  True,  ["cold"]),
-                      ("Lemon Soda",      "low",  True,  ["refreshing"])],
+                      ("Lemon Soda",      "low",  True,  ["refreshing"]),
+                      ("Virgin Mojito",   "mid",  True,  ["refreshing"])],
         "dessert":   [("Brownie with Ice Cream","mid",True,["sweet"]),
-                      ("Ice Cream Sundae","mid",  True,  ["sweet", "cold"])],
+                      ("Ice Cream Sundae","mid",  True,  ["sweet", "cold"]),
+                      ("Fried Ice Cream", "mid",  True,  ["sweet"])],
         "appetizer": [("Hot and Sour Soup","mid", True,  ["soup", "traditional"]),
                       ("Manchow Soup",    "mid",  True,  ["soup"]),
-                      ("Crispy Corn",     "mid",  True,  ["crunchy"])],
+                      ("Crispy Corn",     "mid",  True,  ["crunchy"]),
+                      ("Dim Sum (4pc)",   "mid",  True,  ["steamed"])],
     },
     "Continental": {
         "side":      [("Garlic Bread",    "low",  True,  ["popular"]),
                       ("Caesar Salad",    "mid",  True,  ["healthy"]),
                       ("French Fries",    "low",  True,  ["popular"]),
-                      ("Coleslaw",        "low",  True,  ["fresh"])],
+                      ("Coleslaw",        "low",  True,  ["fresh"]),
+                      ("Mashed Potatoes", "mid",  True,  ["creamy"])],
         "beverage":  [("Coke 500ml",      "low",  True,  ["popular"]),
                       ("Cold Coffee",     "mid",  True,  ["cold", "popular"]),
                       ("Iced Tea",        "low",  True,  ["cold"]),
-                      ("Lemonade",        "low",  True,  ["refreshing"])],
+                      ("Lemonade",        "low",  True,  ["refreshing"]),
+                      ("Virgin Mojito",   "mid",  True,  ["refreshing"])],
         "dessert":   [("Brownie",         "mid",  True,  ["sweet"]),
                       ("Tiramisu",        "mid",  True,  ["sweet", "premium"]),
-                      ("Chocolate Mousse","mid",  True,  ["sweet"])],
+                      ("Chocolate Mousse","mid",  True,  ["sweet"]),
+                      ("Cheesecake",      "mid",  True,  ["sweet", "premium"])],
         "appetizer": [("Bruschetta",      "mid",  True,  ["starter"]),
-                      ("Soup of the Day", "mid",  True,  ["soup"])],
+                      ("Soup of the Day", "mid",  True,  ["soup"]),
+                      ("Nachos with Salsa","mid", True,  ["crunchy"])],
     },
     "Fast Food": {
         "side":      [("French Fries (M)","low",  True,  ["popular"]),
                       ("Onion Rings",     "low",  True,  ["crispy"]),
-                      ("Hash Brown",      "low",  True,  ["crispy"])],
+                      ("Hash Brown",      "low",  True,  ["crispy"]),
+                      ("Potato Wedges",   "low",  True,  ["crispy"])],
         "beverage":  [("Coke (M)",        "low",  True,  ["popular"]),
                       ("Pepsi (M)",       "low",  True,  ["popular"]),
                       ("Iced Tea",        "low",  True,  ["cold"]),
-                      ("Cold Coffee",     "mid",  True,  ["cold", "popular"])],
+                      ("Cold Coffee",     "mid",  True,  ["cold", "popular"]),
+                      ("Chocolate Shake", "mid",  True,  ["sweet"])],
         "dessert":   [("McFlurry",        "mid",  True,  ["sweet", "cold"]),
                       ("Sundae",          "low",  True,  ["sweet"]),
-                      ("Chocolate Cookie","low",  True,  ["sweet"])],
+                      ("Chocolate Cookie","low",  True,  ["sweet"]),
+                      ("Brownie",         "mid",  True,  ["sweet"])],
         "appetizer": [("Chicken Nuggets", "mid",  False, ["fried"]),
-                      ("Veg Strips",      "mid",  True,  ["fried"])],
+                      ("Veg Strips",      "mid",  True,  ["fried"]),
+                      ("Cheese Balls",    "mid",  True,  ["fried", "popular"])],
     },
     "Street Food": {
         "side":      [("Green Chutney",   "low",  True,  ["tangy"]),
-                      ("Sev",             "low",  True,  ["crunchy"])],
+                      ("Sev",             "low",  True,  ["crunchy"]),
+                      ("Onion Rings",     "low",  True,  ["crispy"])],
         "beverage":  [("Masala Soda",     "low",  True,  ["refreshing"]),
                       ("Cutting Chai",    "low",  True,  ["hot", "traditional"]),
-                      ("Nimbu Pani",      "low",  True,  ["refreshing"])],
+                      ("Nimbu Pani",      "low",  True,  ["refreshing"]),
+                      ("Coke 500ml",      "low",  True,  ["popular"])],
         "dessert":   [("Kulfi",           "low",  True,  ["sweet", "cold"]),
-                      ("Rabdi",           "low",  True,  ["sweet"])],
+                      ("Rabdi",           "low",  True,  ["sweet"]),
+                      ("Jalebi (2pc)",    "low",  True,  ["sweet", "traditional"])],
         "appetizer": [("Pani Puri",       "low",  True,  ["popular"]),
-                      ("Bhel Puri",       "low",  True,  ["popular", "tangy"])],
+                      ("Bhel Puri",       "low",  True,  ["popular", "tangy"]),
+                      ("Samosa (2pc)",    "low",  True,  ["popular"]),
+                      ("Vada Pav",        "low",  True,  ["popular", "mumbai"])],
     },
     "Dessert": {
         "beverage":  [("Cold Coffee",     "mid",  True,  ["cold", "popular"]),
                       ("Chocolate Shake", "mid",  True,  ["sweet"]),
                       ("Hot Chocolate",   "mid",  True,  ["hot", "sweet"]),
-                      ("Iced Tea",        "low",  True,  ["cold"])],
+                      ("Iced Tea",        "low",  True,  ["cold"]),
+                      ("Cappuccino",      "mid",  True,  ["hot"])],
         "dessert":   [("Brownie",         "mid",  True,  ["sweet"]),
                       ("Waffle with Ice Cream","mid",True,["sweet"]),
-                      ("Cheesecake",      "mid",  True,  ["sweet", "premium"])],
+                      ("Cheesecake",      "mid",  True,  ["sweet", "premium"]),
+                      ("Cookie (2pc)",    "low",  True,  ["sweet"]),
+                      ("Pastry",          "mid",  True,  ["sweet"])],
     },
 }
 
@@ -166,6 +289,8 @@ _UNIVERSAL_SAFE: list[tuple[str, str, str, bool, list[str]]] = [
     ("Masala Papad",       "appetizer", "low",  True,  ["crunchy"]),
     ("Gulab Jamun (2pc)",  "dessert",   "low",  True,  ["sweet"]),
     ("Iced Tea",           "beverage",  "low",  True,  ["cold"]),
+    ("Lassi (Sweet)",      "beverage",  "low",  True,  ["cooling"]),
+    ("Raita",              "side",      "low",  True,  ["cooling"]),
 ]
 
 # ── PRICE BRACKET RANGES ─────────────────────────────────────────────────
@@ -180,10 +305,11 @@ _PRICE_BRACKETS = {
 
 _MEAL_TIME_PRIORITY: dict[str, list[str]] = {
     "breakfast":      ["beverage", "side", "appetizer"],
-    "lunch":          ["side", "beverage", "dessert", "appetizer"],
+    "lunch":          ["bread", "side", "beverage", "dessert", "appetizer"],
     "evening_snacks": ["appetizer", "beverage", "dessert"],
-    "dinner":         ["side", "beverage", "dessert", "appetizer"],
+    "dinner":         ["bread", "side", "beverage", "dessert", "appetizer"],
     "late_night":     ["beverage", "dessert", "side"],
+    "snack":          ["appetizer", "beverage", "dessert", "side"],
 }
 
 # ── MEAL-TIME WINDOWS ───────────────────────────────────────────────────
@@ -201,7 +327,8 @@ _MEAL_TIME_WINDOWS = {
 _CATEGORY_MAP = {
     "main": "main", "main_course": "main", "mains": "main",
     "side": "side", "sides": "side", "accompaniment": "side",
-    "bread": "side", "rice": "side",
+    "bread": "bread", "roti": "bread", "naan": "bread",
+    "rice": "side",
     "beverage": "beverage", "beverages": "beverage",
     "drink": "beverage", "drinks": "beverage",
     "dessert": "dessert", "desserts": "dessert", "sweet": "dessert",
@@ -215,87 +342,10 @@ def _norm_cat(raw: str) -> str:
     return _CATEGORY_MAP.get(raw.lower().strip(), raw.lower().strip())
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-#  SLM (Small Language Model) HELPER
-# ═══════════════════════════════════════════════════════════════════════════════
 
-class _SLMHelper:
-    """
-    Lightweight wrapper for SLM zero-shot reasoning.
-
-    Tries Ollama (local) first, then falls back to HuggingFace,
-    then to a deterministic rule-based fallback.
-    """
-
-    def __init__(self) -> None:
-        self._backend: str | None = None
-        self._client = None
-
-    def _init_backend(self) -> None:
-        if self._backend is not None:
-            return
-        # Try Ollama
-        try:
-            import ollama as _ollama
-            _ollama.list()
-            self._backend = "ollama"
-            self._client = _ollama
-            logger.info("SLM backend: Ollama (local)")
-            return
-        except Exception:
-            pass
-        # Try HuggingFace pipeline
-        try:
-            from transformers import pipeline as _hf_pipeline
-            self._client = _hf_pipeline(
-                "text-generation", model="TinyLlama/TinyLlama-1.1B-Chat-v1.0",
-                max_new_tokens=200, do_sample=False,
-            )
-            self._backend = "huggingface"
-            logger.info("SLM backend: HuggingFace TinyLlama")
-            return
-        except Exception:
-            pass
-        self._backend = "rule_based"
-        logger.info("SLM backend: rule-based fallback (no LLM available)")
-
-    def generate(self, prompt: str) -> str:
-        """Send a prompt and return the response text."""
-        self._init_backend()
-        try:
-            if self._backend == "ollama":
-                resp = self._client.chat(
-                    model="llama3.2:1b",
-                    messages=[{"role": "user", "content": prompt}],
-                )
-                return resp.get("message", {}).get("content", "")
-            elif self._backend == "huggingface":
-                result = self._client(prompt)
-                return result[0]["generated_text"][len(prompt):].strip()
-        except Exception as exc:
-            logger.warning("SLM generation failed (%s): %s", self._backend, exc)
-        return ""  # fallback: empty → caller uses rule-based logic
-
-    @property
-    def available(self) -> bool:
-        self._init_backend()
-        return self._backend in ("ollama", "huggingface")
-
-
-# Singleton SLM instance (lazy)
-_slm: _SLMHelper | None = None
-
-
-def _get_slm() -> _SLMHelper:
-    global _slm
-    if _slm is None:
-        _slm = _SLMHelper()
-    return _slm
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
+# ═════════════════════════════════════════════════════════════════════════════
 #  COLD START AGENT
-# ═══════════════════════════════════════════════════════════════════════════════
+# ═════════════════════════════════════════════════════════════════════════════
 
 class ColdStartAgent:
     """
@@ -303,33 +353,11 @@ class ColdStartAgent:
 
     When the ML retrieval model has insufficient data (new user, new
     restaurant, new item, unusual cart), this agent uses culinary
-    intelligence, SLM zero-shot reasoning, menu embeddings, and
-    contextual heuristics to produce 10 recommendations with
-    confidence scores and risk assessments.
+    intelligence and contextual heuristics to produce 10 recommendations
+    with confidence scores and risk assessments.
 
-    Implements the Hybrid Cold-Start Pipeline:
-      1. Attempt user-level personalisation (if history exists)
-      2. If fails → city + meal-time templates
-      3. If fails → restaurant cuisine-type templates
-      4. If fails → rule-based complements (mains→sides, any→beverages)
-      5. Always include SLM zero-shot reasoning as final enrichment layer
+    Stateless — every call to ``recommend()`` is independent.
     """
-
-    def __init__(self) -> None:
-        self._slm = _get_slm()
-        self._embedding_model = None  # lazy-loaded
-
-    def _get_embedding_model(self):
-        """Lazy-load sentence-transformer for menu/item embeddings."""
-        if self._embedding_model is None:
-            try:
-                from sentence_transformers import SentenceTransformer
-                self._embedding_model = SentenceTransformer(
-                    "all-MiniLM-L6-v2", device="cpu",
-                )
-            except Exception as exc:
-                logger.warning("Failed to load embedding model: %s", exc)
-        return self._embedding_model
 
     # ── PUBLIC API ──────────────────────────────────────────────────────────
 
@@ -343,7 +371,7 @@ class ColdStartAgent:
         top_k: int = 10,
     ) -> dict[str, Any]:
         """
-        Generate cold-start recommendations via the Hybrid Pipeline.
+        Generate cold-start recommendations.
 
         Parameters
         ----------
@@ -356,7 +384,7 @@ class ColdStartAgent:
             Full restaurant menu (if available). Each dict:
             item_id, name, category, price, is_veg, popularity_score, tags.
         context : dict | None
-            Optional: hour, meal_type, is_weekend, city, user_history.
+            Optional: hour, meal_type, is_weekend, city.
         cold_start_type : str
             One of: "new_user", "new_restaurant", "new_item", "unusual_cart".
         top_k : int
@@ -401,23 +429,13 @@ class ColdStartAgent:
             cuisine, meal_type, cart_cats, menu, cart_names,
         )
 
-        # ── Step 1b: Cold-start–specific candidate enrichment ────────────────
-        extra_candidates = self._cold_start_enrich(
-            cold_start_type, cart_items, restaurant, menu, ctx,
-            cuisine, meal_type, city, cart_names,
-        )
-        # Merge extras — avoid duplicates
-        existing_names = {c["name"].lower() for c in raw_candidates}
-        for ec in extra_candidates:
-            if ec["name"].lower() not in existing_names:
-                raw_candidates.append(ec)
-                existing_names.add(ec["name"].lower())
-
         # ── Step 2: Score each candidate ─────────────────────────────────────
         scored: list[dict] = []
         for cand in raw_candidates:
+            # Skip if already in cart
             if cand["name"].lower() in cart_names:
                 continue
+            # Skip dietary conflict
             if cart_is_all_veg and not cand["is_veg"]:
                 continue
 
@@ -432,11 +450,6 @@ class ColdStartAgent:
         scored.sort(key=lambda x: -x["confidence"])
         final = self._apply_diversity(scored, top_k)
 
-        # ── Step 3b: SLM final enrichment layer ─────────────────────────────
-        final = self._slm_enrich_final(
-            final, cart_items, cuisine, meal_type, city, cold_start_type,
-        )
-
         # Assign ranks
         for i, item in enumerate(final):
             item["rank"] = i + 1
@@ -449,7 +462,7 @@ class ColdStartAgent:
 
         return {
             "agent": "ColdStartRecommendationAgent",
-            "version": "2.0",
+            "version": "1.0",
             "cold_start_type": cold_start_type,
             "total_candidates_generated": len(raw_candidates),
             "total_after_filters": len(scored),
@@ -462,405 +475,9 @@ class ColdStartAgent:
                 "is_weekend": is_weekend,
                 "cart_value": total_cart_value,
                 "avg_item_price": round(avg_item_price),
-                "slm_available": self._slm.available,
-                "approach": "hybrid_cold_start_pipeline",
+                "approach": "culinary_intelligence + contextual_heuristics",
             },
         }
-
-    # ── COLD-START SPECIFIC ENRICHMENT ──────────────────────────────────────
-
-    def _cold_start_enrich(
-        self,
-        cold_start_type: str,
-        cart_items: list[dict],
-        restaurant: dict,
-        menu: list[dict] | None,
-        context: dict,
-        cuisine: str,
-        meal_type: str,
-        city: str,
-        cart_names: set[str],
-    ) -> list[dict]:
-        """
-        Dispatch to the appropriate cold-start strategy and return
-        extra candidates beyond the standard KB/menu pool.
-        """
-        extras: list[dict] = []
-
-        if cold_start_type == "new_user":
-            extras = self._handle_new_user(
-                cart_items, cuisine, meal_type, city, cart_names,
-            )
-        elif cold_start_type == "new_restaurant":
-            extras = self._handle_new_restaurant(
-                restaurant, menu, cuisine, meal_type, cart_names,
-            )
-        elif cold_start_type == "new_item":
-            extras = self._handle_new_item(
-                cart_items, menu, cuisine, cart_names,
-            )
-        # unusual_cart uses standard KB — no extra enrichment needed
-
-        return extras
-
-    # ── SCENARIO 1: NEW USER ────────────────────────────────────────────────
-
-    def _handle_new_user(
-        self,
-        cart_items: list[dict],
-        cuisine: str,
-        meal_type: str,
-        city: str,
-        cart_names: set[str],
-    ) -> list[dict]:
-        """
-        New Users (No Order History):
-          - Use city-level + meal-time aggregate templates
-          - SLM zero-shot reasoning with contextual prompt
-          - Fallback to popularity-based ranking
-        """
-        extras: list[dict] = []
-
-        # 1a. City-level aggregate template (from user_features)
-        try:
-            from ..features.user_features import CITY_PROFILES
-            profile = CITY_PROFILES.get(city, {})
-            popular_items = profile.get("popular_items", [])
-            for item_name in popular_items:
-                if item_name.lower() in cart_names:
-                    continue
-                extras.append({
-                    "name": item_name.replace("_", " ").title(),
-                    "category": "popular",
-                    "price": 150,
-                    "is_veg": True,
-                    "tags": ["city_popular", city.lower()],
-                    "source": "city_aggregate",
-                    "source_priority": 0.85,
-                    "popularity_score": 0.75,
-                })
-        except Exception as exc:
-            logger.debug("City profile lookup failed: %s", exc)
-
-        # 1b. SLM zero-shot reasoning
-        cart_desc = ", ".join(i.get("name", "") for i in cart_items)
-        prompt = (
-            f"User is ordering {meal_type} in {city} with [{cart_desc}]. "
-            f"The cuisine is {cuisine}. "
-            f"Suggest 5 complementary add-ons popular in this region and "
-            f"meal time. Return ONLY a JSON list of strings with item names."
-        )
-        slm_items = self._parse_slm_item_list(self._slm.generate(prompt))
-        for name in slm_items:
-            if name.lower() in cart_names:
-                continue
-            extras.append({
-                "name": name,
-                "category": "side",
-                "price": 120,
-                "is_veg": True,
-                "tags": ["slm_suggested", "zero_shot"],
-                "source": "slm_zero_shot",
-                "source_priority": 0.80,
-                "popularity_score": 0.70,
-            })
-
-        return extras
-
-    # ── SCENARIO 2: NEW RESTAURANT ──────────────────────────────────────────
-
-    def _handle_new_restaurant(
-        self,
-        restaurant: dict,
-        menu: list[dict] | None,
-        cuisine: str,
-        meal_type: str,
-        cart_names: set[str],
-    ) -> list[dict]:
-        """
-        New Restaurants (Recently Listed):
-          - Extract menu embeddings via SentenceTransformers
-          - Use cuisine-type templates from KB
-          - SLM analyses menu structure for complement patterns
-          - Bootstrap with embedding similarity to known items
-        """
-        extras: list[dict] = []
-
-        # 2a. Menu embedding extraction + similarity to known complements
-        if menu:
-            model = self._get_embedding_model()
-            if model is not None:
-                try:
-                    menu_names = [i.get("name", "") for i in menu]
-                    menu_embs = model.encode(menu_names, normalize_embeddings=True)
-
-                    # Encode known complement categories
-                    complement_texts = []
-                    complement_info = []
-                    cuisine_kb = _CUISINE_COMPLEMENTS.get(cuisine, {})
-                    for cat, items in cuisine_kb.items():
-                        for name, bracket, is_veg, tags in items:
-                            complement_texts.append(name)
-                            complement_info.append({
-                                "name": name, "category": cat,
-                                "bracket": bracket, "is_veg": is_veg,
-                                "tags": tags,
-                            })
-
-                    if complement_texts:
-                        comp_embs = model.encode(
-                            complement_texts, normalize_embeddings=True,
-                        )
-                        # Find menu items most similar to known complements
-                        sims = menu_embs @ comp_embs.T
-                        for j, comp in enumerate(complement_info):
-                            best_menu_idx = int(np.argmax(sims[:, j]))
-                            sim_score = float(sims[best_menu_idx, j])
-                            if sim_score > 0.4:
-                                menu_item = menu[best_menu_idx]
-                                name = menu_item.get("name", "")
-                                if name.lower() in cart_names:
-                                    continue
-                                extras.append({
-                                    "name": name,
-                                    "category": comp["category"],
-                                    "price": menu_item.get("price", 100),
-                                    "is_veg": menu_item.get("is_veg", True),
-                                    "tags": comp["tags"] + ["menu_embed_match"],
-                                    "source": "menu_embedding",
-                                    "source_priority": 0.85 + sim_score * 0.1,
-                                    "popularity_score": sim_score,
-                                })
-                except Exception as exc:
-                    logger.warning("Menu embedding failed: %s", exc)
-
-        # 2b. SLM menu analysis
-        if menu:
-            items_list = ", ".join(i.get("name", "") for i in menu[:20])
-            prompt = (
-                f"This restaurant menu includes [{items_list}]. "
-                f"The cuisine is {cuisine}. "
-                f"What are the typical complement patterns for this cuisine? "
-                f"Return ONLY a JSON list of 5 complementary item name strings."
-            )
-            slm_items = self._parse_slm_item_list(self._slm.generate(prompt))
-            for name in slm_items:
-                if name.lower() in cart_names:
-                    continue
-                extras.append({
-                    "name": name,
-                    "category": "side",
-                    "price": 100,
-                    "is_veg": True,
-                    "tags": ["slm_menu_analysis"],
-                    "source": "slm_menu_analysis",
-                    "source_priority": 0.75,
-                    "popularity_score": 0.65,
-                })
-
-        return extras
-
-    # ── SCENARIO 3: NEW ITEM ────────────────────────────────────────────────
-
-    def _handle_new_item(
-        self,
-        cart_items: list[dict],
-        menu: list[dict] | None,
-        cuisine: str,
-        cart_names: set[str],
-    ) -> list[dict]:
-        """
-        New Items (Newly Added to Menu):
-          - Text-based similarity: embed item name+description, find
-            nearest neighbours in existing item space
-          - Category-based fallback: use category complement rules
-          - Quick-learning: after 50 impressions, item gets own graph node
-        """
-        extras: list[dict] = []
-        model = self._get_embedding_model()
-
-        # Identify new items in cart (items without historical data)
-        new_cart_items = [
-            i for i in cart_items
-            if i.get("is_new", False) or i.get("impressions", 100) < 50
-        ]
-        if not new_cart_items:
-            new_cart_items = cart_items  # treat all as potentially new
-
-        if model is not None and new_cart_items:
-            try:
-                # Embed new item names
-                new_texts = [
-                    f"{i.get('name', '')} {i.get('description', '')}".strip()
-                    for i in new_cart_items
-                ]
-                new_embs = model.encode(new_texts, normalize_embeddings=True)
-
-                # Build reference set from cuisine KB
-                ref_texts = []
-                ref_info = []
-                cuisine_kb = _CUISINE_COMPLEMENTS.get(cuisine, {})
-                for cat, items in cuisine_kb.items():
-                    for name, bracket, is_veg, tags in items:
-                        ref_texts.append(name)
-                        lo, hi = _PRICE_BRACKETS[bracket]
-                        ref_info.append({
-                            "name": name, "category": cat,
-                            "price": (lo + hi) // 2,
-                            "is_veg": is_veg, "tags": tags,
-                        })
-
-                # Add menu items as reference too
-                if menu:
-                    for mi in menu:
-                        name = mi.get("name", "")
-                        if name.lower() not in cart_names:
-                            ref_texts.append(name)
-                            ref_info.append({
-                                "name": name,
-                                "category": _norm_cat(mi.get("category", "other")),
-                                "price": mi.get("price", 100),
-                                "is_veg": mi.get("is_veg", True),
-                                "tags": mi.get("tags", []),
-                            })
-
-                if ref_texts:
-                    ref_embs = model.encode(
-                        ref_texts, normalize_embeddings=True,
-                    )
-                    # Similarity: new items → reference items
-                    sims = new_embs @ ref_embs.T
-                    seen = set()
-                    for i in range(sims.shape[0]):
-                        # Top 3 nearest neighbours for each new item
-                        top_indices = np.argsort(-sims[i])[:3]
-                        for idx in top_indices:
-                            sim_score = float(sims[i, idx])
-                            if sim_score < 0.3:
-                                continue
-                            info = ref_info[idx]
-                            name = info["name"]
-                            if name.lower() in cart_names or name.lower() in seen:
-                                continue
-                            seen.add(name.lower())
-                            extras.append({
-                                "name": name,
-                                "category": info["category"],
-                                "price": info["price"],
-                                "is_veg": info["is_veg"],
-                                "tags": info["tags"] + ["item_similarity"],
-                                "source": "item_similarity",
-                                "source_priority": 0.80 + sim_score * 0.15,
-                                "popularity_score": sim_score,
-                            })
-            except Exception as exc:
-                logger.warning("New item similarity failed: %s", exc)
-
-        # Category-based fallback is already handled by standard KB generation
-        return extras
-
-    # ── SLM FINAL ENRICHMENT LAYER ──────────────────────────────────────────
-
-    def _slm_enrich_final(
-        self,
-        candidates: list[dict],
-        cart_items: list[dict],
-        cuisine: str,
-        meal_type: str,
-        city: str,
-        cold_start_type: str,
-    ) -> list[dict]:
-        """
-        Final SLM enrichment: pass top candidates through the SLM to
-        generate better reasoning explanations and optionally re-score.
-
-        This ensures the system always returns contextual recommendations.
-        """
-        if not candidates or not self._slm.available:
-            return candidates
-
-        try:
-            cart_desc = ", ".join(i.get("name", "") for i in cart_items)
-            cand_names = ", ".join(c.get("name", "") for c in candidates[:5])
-            prompt = (
-                f"A {cold_start_type.replace('_', ' ')} is ordering "
-                f"{meal_type} in {city} ({cuisine} cuisine). "
-                f"Cart: [{cart_desc}]. "
-                f"We are recommending: [{cand_names}]. "
-                f"For each recommended item, provide a short one-sentence "
-                f"reason why it's a good complement. Return a JSON object "
-                f"mapping item name to reason string."
-            )
-            response = self._slm.generate(prompt)
-            reasons = self._parse_slm_reasons(response)
-
-            for cand in candidates:
-                name = cand.get("name", "")
-                if name in reasons:
-                    cand["slm_reasoning"] = reasons[name]
-                    cand["slm_enriched"] = True
-                elif name.lower() in {k.lower(): k for k in reasons}:
-                    key = next(k for k in reasons if k.lower() == name.lower())
-                    cand["slm_reasoning"] = reasons[key]
-                    cand["slm_enriched"] = True
-                else:
-                    cand["slm_enriched"] = False
-        except Exception as exc:
-            logger.debug("SLM final enrichment failed: %s", exc)
-
-        return candidates
-
-    # ── SLM RESPONSE PARSERS ────────────────────────────────────────────────
-
-    @staticmethod
-    def _parse_slm_item_list(response: str) -> list[str]:
-        """Parse SLM response expecting a JSON list of item name strings."""
-        if not response:
-            return []
-        try:
-            # Try direct JSON parse
-            items = json.loads(response)
-            if isinstance(items, list):
-                return [str(i).strip() for i in items if i][:5]
-        except json.JSONDecodeError:
-            pass
-        # Try extracting a JSON array from the response text
-        try:
-            start = response.index("[")
-            end = response.rindex("]") + 1
-            items = json.loads(response[start:end])
-            if isinstance(items, list):
-                return [str(i).strip() for i in items if i][:5]
-        except (ValueError, json.JSONDecodeError):
-            pass
-        # Fallback: split by commas/newlines
-        items = []
-        for line in response.replace(",", "\n").split("\n"):
-            cleaned = line.strip().strip("-•*").strip('"\'').strip()
-            if cleaned and len(cleaned) < 50 and not cleaned.startswith("{"):
-                items.append(cleaned)
-        return items[:5]
-
-    @staticmethod
-    def _parse_slm_reasons(response: str) -> dict[str, str]:
-        """Parse SLM response expecting a JSON object {item: reason}."""
-        if not response:
-            return {}
-        try:
-            data = json.loads(response)
-            if isinstance(data, dict):
-                return {str(k): str(v) for k, v in data.items()}
-        except json.JSONDecodeError:
-            pass
-        try:
-            start = response.index("{")
-            end = response.rindex("}") + 1
-            data = json.loads(response[start:end])
-            if isinstance(data, dict):
-                return {str(k): str(v) for k, v in data.items()}
-        except (ValueError, json.JSONDecodeError):
-            pass
-        return {}
 
     # ── CANDIDATE GENERATION ────────────────────────────────────────────────
 

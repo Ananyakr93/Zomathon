@@ -92,7 +92,7 @@ class InferencePipeline:
     def recommend(
         self,
         cart_items: list[dict[str, Any]],
-        top_n: int = 5,
+        top_n: int = 10,
         excluded_ids: set[str] | None = None,
         restaurant: dict[str, Any] | None = None,
         user: dict[str, Any] | None = None,
@@ -164,7 +164,7 @@ class InferencePipeline:
     def recommend_sequential(
         self,
         cart_history: list[list[dict[str, Any]]],
-        top_n: int = 5,
+        top_n: int = 10,
         restaurant: dict[str, Any] | None = None,
         user: dict[str, Any] | None = None,
         context: dict[str, Any] | None = None,
