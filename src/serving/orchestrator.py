@@ -24,8 +24,12 @@ from .production_config import ProductionConfig
 from .circuit_breaker import FallbackManager, CircuitState
 from .cache_manager import CacheManager
 from .monitoring import RequestTracer, MonitoringDashboard
+from .session_state import SessionStore
 
 logger = logging.getLogger(__name__)
+
+# Minimum relevance score — items below this are filtered out
+MIN_SCORE_THRESHOLD = 0.15
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -52,6 +56,7 @@ class ServingOrchestrator:
         self.cache = CacheManager()
         self.fallback = FallbackManager()
         self.monitor = MonitoringDashboard()
+        self.sessions = SessionStore()
         self._executor = ThreadPoolExecutor(max_workers=8)
 
     # ── MAIN ENTRY POINT ───────────────────────────────────────────────────
@@ -63,6 +68,7 @@ class ServingOrchestrator:
         user: dict[str, Any] | None = None,
         context: dict[str, Any] | None = None,
         top_k: int = 10,
+        session_id: str | None = None,
     ) -> dict[str, Any]:
         """
         Execute the full recommendation pipeline.
@@ -110,6 +116,21 @@ class ServingOrchestrator:
             features = self._retrieve_features(cart_items, restaurant, user)
             tracer.end_span()
 
+            # ── 4b. Session state tracking ─────────────────────────────────
+            session_ctx = {}
+            completeness = features.get("meal_completeness_score", 50.0)
+            if session_id:
+                session = self.sessions.get_or_create(session_id)
+                session.update(cart_items, completeness=completeness)
+                session_ctx = session.get_context()
+                features["session_context"] = session_ctx
+
+            # ── 4c. Dynamic top_k based on completeness ────────────────────
+            effective_top_k = self._compute_dynamic_top_k(
+                top_k, completeness, session_ctx,
+            )
+            tracer.metadata["effective_top_k"] = effective_top_k
+
             tracer.start_span("candidate_generation")
             candidates = self._generate_candidates(
                 cart_items, restaurant, features
@@ -141,16 +162,31 @@ class ServingOrchestrator:
 
             # ── 6. Post-processing ─────────────────────────────────────────
             tracer.start_span("post_processing")
-            final = self._post_process(ranked, top_k, cart_items)
+            final = self._post_process(ranked, effective_top_k, cart_items)
             tracer.end_span(n_returned=len(final))
+
+            # ── 6b. Record recommendations in session ─────────────────────
+            if session_id and session_id in {s: s for s in [session_id]}:
+                session = self.sessions.get(session_id)
+                if session:
+                    session.record_recommendations(
+                        [r.get("name", "") for r in final]
+                    )
 
             # ── 7. Assemble response ───────────────────────────────────────
             response = {
                 "recommendations": final,
                 "strategy": strategy,
+                "effective_top_k": effective_top_k,
+                "meal_completeness": completeness,
                 "latency_ms": round(tracer.total_ms, 2),
                 "trace": tracer.to_dict(),
             }
+            if session_ctx:
+                response["session"] = {
+                    "step": session_ctx.get("session_step", 0),
+                    "meal_is_done": session_ctx.get("meal_is_done", False),
+                }
 
             # Cache the response
             self.cache.l2.set(cache_key, response,
@@ -181,24 +217,98 @@ class ServingOrchestrator:
         user: dict | None,
     ) -> dict:
         """
-        Retrieve features from the feature store.
-        In production: Redis feature store lookup (< 30ms).
-        """
-        cart_names = [i.get("name", "") for i in cart_items]
-        total_value = sum(i.get("price", 0) for i in cart_items)
-        avg_price = total_value / max(len(cart_items), 1)
-        categories = list({i.get("category", "") for i in cart_items})
+        Retrieve features from the 3-tier feature pipeline.
 
-        return {
-            "cart_names": cart_names,
-            "cart_categories": categories,
-            "cart_total": total_value,
-            "avg_price": round(avg_price, 2),
-            "cuisine": restaurant.get("cuisine_type", "unknown"),
-            "restaurant_type": restaurant.get("restaurant_type", "local"),
-            "user_dietary": (user or {}).get("dietary_preference", "any"),
-            "user_price_sensitivity": (user or {}).get("price_sensitivity", "medium"),
-        }
+        Tier 1 (real-time): Cart composition + session graph (<10ms)
+        Tier 2 (cached):    User embeddings + preferences from ChromaDB (<20ms)
+        Tier 3 (cached):    Temporal, geographic, restaurant context (<5ms)
+        """
+        features: dict = {}
+
+        # ── Tier 1: Real-Time Cart Features ───────────────────────────────
+        try:
+            from ..features.cart_features import compute_cart_features
+            cart_feats = compute_cart_features(cart_items)
+            features.update(cart_feats.to_dict())
+        except Exception as exc:
+            logger.warning("Tier-1 cart features failed: %s", exc)
+            # Fallback to basic aggregates
+            cart_names = [i.get("name", "") for i in cart_items]
+            total_value = sum(i.get("price", 0) for i in cart_items)
+            features.update({
+                "cart_total_value": total_value,
+                "cart_item_count": len(cart_items),
+                "cart_avg_price": round(total_value / max(len(cart_items), 1), 2),
+            })
+
+        # ── Tier 1: Temporal Session Graph ────────────────────────────────
+        try:
+            from ..features.session_graph import SessionGraph, PMIMatrix
+            pmi = PMIMatrix.load()
+            graph = SessionGraph(pmi_matrix=pmi)
+            for item in cart_items:
+                graph.add_item(item)
+            features.update(graph.compute_graph_features())
+            features["_session_graph"] = graph  # Pass graph downstream
+            features["_graph_candidates"] = graph.get_candidate_scores(top_k=20)
+        except Exception as exc:
+            logger.warning("Tier-1 session graph failed: %s", exc)
+            features.update({
+                "graph_node_count": 0, "graph_edge_count": 0,
+            })
+
+        # ── Tier 2: User-Level Features ───────────────────────────────────
+        try:
+            from ..features.user_features import (
+                UserEmbeddingStore, compute_user_preferences,
+            )
+            user_data = user or {}
+            user_id = user_data.get("user_id", "anon")
+            order_history = user_data.get("order_history", [])
+
+            # Compute preferences
+            prefs = compute_user_preferences(order_history)
+            features.update(prefs.to_dict())
+
+            # Try to get user embedding from ChromaDB
+            if user_id != "anon" and order_history:
+                try:
+                    store = UserEmbeddingStore()
+                    emb = store.get_user_embedding(user_id)
+                    if emb is not None:
+                        features["user_embedding_available"] = 1
+                    else:
+                        features["user_embedding_available"] = 0
+                except Exception:
+                    features["user_embedding_available"] = 0
+            else:
+                features["user_embedding_available"] = 0
+
+        except Exception as exc:
+            logger.warning("Tier-2 user features failed: %s", exc)
+            features.update({
+                "price_sensitivity": (user or {}).get("price_sensitivity", "medium"),
+                "user_veg_ratio": 0.5,
+            })
+
+        # ── Tier 3: Contextual & Restaurant Features ──────────────────────
+        try:
+            from ..features.context_features import compute_all_context_features
+            context_feats = compute_all_context_features(restaurant)
+            features.update(context_feats)
+        except Exception as exc:
+            logger.warning("Tier-3 context features failed: %s", exc)
+            features.update({
+                "cuisine": restaurant.get("cuisine_type", "unknown"),
+                "restaurant_type": restaurant.get("restaurant_type", "local"),
+            })
+
+        # ── Basic fields always present ───────────────────────────────────
+        features["cart_names"] = [i.get("name", "") for i in cart_items]
+        features["cart_categories"] = list({i.get("category", "") for i in cart_items})
+        features["user_dietary"] = (user or {}).get("dietary_preference", "any")
+
+        return features
 
     def _generate_candidates(
         self,
@@ -304,6 +414,7 @@ class ServingOrchestrator:
     ) -> list[dict]:
         """
         Apply business rules:
+          - Filter out items below MIN_SCORE_THRESHOLD (if final_score is present)
           - Remove duplicates with cart
           - Enforce category diversity (max 3 per category)
           - Trim to top_k
@@ -313,18 +424,54 @@ class ServingOrchestrator:
         cat_count: dict[str, int] = {}
 
         for item in ranked:
+            # 1. Filter out low-confidence items
+            score = item.get("final_score")
+            if score is not None and score < MIN_SCORE_THRESHOLD:
+                continue
+
+            # 2. Duplicate check
             name = item.get("name", "")
             if name.lower() in cart_names:
                 continue
+
+            # 3. Category diversity
             cat = item.get("category", "other")
             if cat_count.get(cat, 0) >= 3:
                 continue
+
             cat_count[cat] = cat_count.get(cat, 0) + 1
             final.append(item)
             if len(final) >= top_k:
                 break
 
         return final
+
+    def _compute_dynamic_top_k(
+        self,
+        base_top_k: int,
+        completeness: float,
+        session_ctx: dict[str, Any],
+    ) -> int:
+        """
+        Adjust recommendation intensity based on how complete the meal is.
+        - Meal < 50% complete  -> Aggressive (8 items)
+        - Meal 50-80% complete -> Standard (6 items)
+        - Meal > 80% complete  -> Gentle (3-4 items)
+        """
+        # If the meal is mostly complete, scale back recommendations
+        if completeness >= 80.0:
+            target = 4
+        elif completeness >= 50.0:
+            target = 6
+        else:
+            target = max(8, base_top_k)  # Aggressive defaults to 8 or what was requested
+
+        # Further reduce based on recommendation fatigue (0-1 scale)
+        fatigue = session_ctx.get("recommendation_fatigue", 0.0)
+        if fatigue > 0.5:
+            target = max(2, target - 2)
+
+        return min(target, base_top_k)
 
     # ── RATE LIMITED ────────────────────────────────────────────────────────
 

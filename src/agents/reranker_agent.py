@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import json
 import math
+from dataclasses import dataclass
 from typing import Any
 
 # ── SCORING WEIGHTS ─────────────────────────────────────────────────────────
@@ -256,19 +257,12 @@ class RerankerAgent:
         # ── SORT BY FINAL SCORE ─────────────────────────────────────────────
         scored.sort(key=lambda x: -x["final_score"])
 
-        # ── DIVERSITY ENFORCEMENT ───────────────────────────────────────────
-        # Don't allow more than max_same_cat items of the same category
-        final_list: list[dict] = []
-        cat_count: dict[str, int] = {}
-        for item in scored:
-            c = item["category"]
-            if cat_count.get(c, 0) >= max_same_cat:
-                continue
-            cat_count[c] = cat_count.get(c, 0) + 1
-            item["rank"] = len(final_list) + 1
-            final_list.append(item)
-            if len(final_list) >= top_k:
-                break
+        # ── CONSTRAINED BEAM SEARCH ─────────────────────────────────────────
+        final_list = self._constrained_beam_select(
+            scored=scored,
+            top_k=top_k,
+            max_same_cat=max_same_cat,
+        )
 
         # ── EXPLANATION SUMMARY ─────────────────────────────────────────────
         explanation = self._build_explanation_summary(
@@ -591,6 +585,114 @@ class RerankerAgent:
             },
             "scoring_metadata": {},
         }
+
+    # ── CONSTRAINED BEAM SEARCH ─────────────────────────────────────────────
+
+    @staticmethod
+    def _constrained_beam_select(
+        scored: list[dict],
+        top_k: int,
+        max_same_cat: int,
+        beam_width: int = 5,
+    ) -> list[dict]:
+        """
+        Sub-selects top_k items maximizing sum(score) + diversity,
+        while adhering to hard business constraints:
+          - Maximum `max_same_cat` items per category
+          - At least 2 high_margin items (margin_pct >= 50)
+          - At most 3 impulse items (price < 80)
+          - At least 3 distinct categories overall
+        """
+        if not scored:
+            return []
+        
+        target_k = min(top_k, len(scored))
+
+        @dataclass
+        class State:
+            items: list[dict]
+            score_sum: float
+            categories: dict[str, int]
+            high_margin: int
+            impulse: int
+            
+            def evaluate(self, is_final: bool = False) -> float:
+                # Base score: sum of item scores
+                score = self.score_sum
+                
+                # Diversity bonus: rewarding distinct categories
+                unique_cats = len(self.categories)
+                score += unique_cats * 2.0
+                
+                if is_final:
+                    # Hard constraints applied as massive penalties if violated
+                    if unique_cats < min(3, target_k):
+                        score -= 100.0
+                    if self.high_margin < min(2, target_k):
+                        score -= 50.0
+                    if self.impulse > 3:
+                        score -= 50.0
+                else:
+                    # Progressive penalties
+                    if self.impulse > 3:
+                        score -= 50.0  # Unrecoverable
+
+                return score
+
+        # Start with an empty selection
+        beam = [State(items=[], score_sum=0.0, categories={}, high_margin=0, impulse=0)]
+
+        # To avoid permutations, we only add items strictly "after" the last added item in the sorted list
+        # We enforce this by keeping track of the index in 'scored' of the last added item.
+        # But for state tracking without extra fields, we can just use the item's position.
+        item_to_idx = {id(item): i for i, item in enumerate(scored)}
+
+        for step in range(target_k):
+            next_states = []
+            for state in beam:
+                last_idx = item_to_idx[id(state.items[-1])] if state.items else -1
+                
+                for i in range(last_idx + 1, len(scored)):
+                    candidate = scored[i]
+                    cat = candidate["category"]
+                    
+                    # Hard cap per category constraint (strictly enforced)
+                    if state.categories.get(cat, 0) >= max_same_cat:
+                        continue
+                        
+                    # Build next state
+                    new_cats = state.categories.copy()
+                    new_cats[cat] = new_cats.get(cat, 0) + 1
+                    
+                    is_high_margin = candidate.get("margin_pct", 30) >= 50
+                    is_impulse = candidate.get("price", 999) < 80
+                    
+                    new_state = State(
+                        items=state.items + [candidate],
+                        score_sum=state.score_sum + candidate.get("final_score", 0.0),
+                        categories=new_cats,
+                        high_margin=state.high_margin + (1 if is_high_margin else 0),
+                        impulse=state.impulse + (1 if is_impulse else 0)
+                    )
+                    next_states.append(new_state)
+            
+            if not next_states:
+                break
+                
+            # Score and prune
+            is_final_step = (step == target_k - 1)
+            next_states.sort(key=lambda s: -s.evaluate(is_final=is_final_step))
+            beam = next_states[:beam_width]
+
+        if not beam:
+            return []
+
+        # Return best selection, adding ranks
+        best_selection = beam[0].items
+        for i, item in enumerate(best_selection):
+            item["rank"] = i + 1
+            
+        return best_selection
 
 
 # ═════════════════════════════════════════════════════════════════════════════

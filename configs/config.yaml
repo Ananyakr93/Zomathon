@@ -51,3 +51,23 @@ serving:
   workers: 1
   latency_budget_ms: 200
   top_n_default: 5
+
+features:
+  session_graph:
+    decay_constant: 3600        # seconds for recency decay
+    min_pmi_threshold: 0.1
+    pmi_matrix_path: data/processed/pmi_matrix.json
+  user_embeddings:
+    chromadb_path: data/chromadb
+    collection_name: user_embeddings
+    cold_start_strategy: city_aggregate
+    embedding_model: all-MiniLM-L6-v2
+  context:
+    cache_ttl_s: 300
+    cities: 10
+    meal_time_bins: 5
+  batch:
+    pmi_refresh_interval: daily
+    user_refresh_interval: hourly
+    restaurant_refresh_interval: daily
+
