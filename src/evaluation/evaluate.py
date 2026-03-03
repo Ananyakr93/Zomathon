@@ -257,7 +257,42 @@ def run_popularity_baseline(scenario: dict, top_k: int = 8) -> dict:
 #  METRICS COMPUTATION
 # ═════════════════════════════════════════════════════════════════════════════
 
+def calculate_meal_completion_score(cart: list[dict], recommendations: list[dict], k: int = 8) -> float:
+    """
+    Calculate the Meal Completion Score (MCS).
+    Measures improvement in meal completeness after applying top-k recommendations.
+    Cart + Recs should ideally contain a main, a side/bread, a beverage, and a dessert.
+    """
+    def _completeness(items: list[dict]) -> float:
+        cats = {i.get("category", "") for i in items}
+        score = 0.0
+        if "main" in cats: score += 40.0
+        if "side" in cats or "bread" in cats or "starter" in cats: score += 20.0
+        if "beverage" in cats or "drink" in cats: score += 20.0
+        if "dessert" in cats: score += 20.0
+        return score
+    
+    initial = _completeness(cart)
+    # If already highly complete, MCS improvement is technically 0 or N/A.
+    # We measure actual improvement.
+    if initial >= 80.0:
+        return 0.0
+        
+    final = _completeness(cart + recommendations[:k])
+    return (final - initial)
+
+def calculate_category_diversity_score(recommendations: list[dict], k: int = 8) -> float:
+    """
+    Category Diversity Score: # unique categories in top-k / k
+    Target is usually >= 0.5 (4 different categories in top 8).
+    """
+    if not recommendations or k == 0:
+        return 0.0
+    cats = {r.get("category", "") for r in recommendations[:k]}
+    return len(cats) / k
+
 def compute_metrics(
+    cart: list[dict],
     recommended: list[dict],
     expected_categories: list[str],
     k: int = 8,
@@ -292,6 +327,10 @@ def compute_metrics(
                    if r.get("category", "") in expected_categories
                    and r.get("price", 0) < 200)
     acceptance_rate = accepted / max(k, 1)
+    
+    # Custom Metrics
+    mcs_improvement = calculate_meal_completion_score(cart, recommended, k)
+    diversity_score = calculate_category_diversity_score(recommended, k)
 
     return {
         "precision_at_k": round(precision, 4),
@@ -299,6 +338,8 @@ def compute_metrics(
         "hit_at_k": hit,
         "ndcg_at_k": round(ndcg, 4),
         "acceptance_rate": round(acceptance_rate, 4),
+        "mcs_improvement": round(mcs_improvement, 2),
+        "category_diversity": round(diversity_score, 4),
         "n_recommendations": len(recommended[:k]),
     }
 
@@ -326,6 +367,8 @@ def aggregate_by_segment(
             "hit_at_k": round(statistics.mean(m["hit_at_k"] for m in metric_list), 4),
             "ndcg_at_k": round(statistics.mean(m["ndcg_at_k"] for m in metric_list), 4),
             "acceptance_rate": round(statistics.mean(m["acceptance_rate"] for m in metric_list), 4),
+            "mcs_improvement": round(statistics.mean(m["mcs_improvement"] for m in metric_list), 2),
+            "category_diversity": round(statistics.mean(m["category_diversity"] for m in metric_list), 4),
         }
     return aggregated
 
@@ -360,6 +403,7 @@ def run_evaluation(n_scenarios: int = 200, top_k: int = 8) -> dict:
         latencies.append(latency_ms)
 
         csao_metrics = compute_metrics(
+            scenario["cart_items"],
             csao_output["items"],
             scenario["expected_categories"],
             k=top_k,
@@ -378,6 +422,7 @@ def run_evaluation(n_scenarios: int = 200, top_k: int = 8) -> dict:
         # Baseline
         baseline_output = run_popularity_baseline(scenario, top_k=top_k)
         baseline_metrics = compute_metrics(
+            scenario["cart_items"],
             baseline_output["items"],
             scenario["expected_categories"],
             k=top_k,
@@ -460,8 +505,8 @@ def main():
     print("=" * 70)
 
     print(f"\n{'Metric':<25} {'CSAO':>10} {'Baseline':>10} {'Lift':>10}")
-    print("-" * 55)
-    for key in ["precision_at_k", "recall_at_k", "hit_at_k", "ndcg_at_k", "acceptance_rate"]:
+    print("-" * 65)
+    for key in ["precision_at_k", "recall_at_k", "ndcg_at_k", "acceptance_rate", "mcs_improvement", "category_diversity"]:
         csao_val = results["csao_overall"].get(key, 0)
         base_val = results["baseline_overall"].get(key, 0)
         lift_val = results["lift_vs_baseline_pct"].get(key, 0)
@@ -472,11 +517,11 @@ def main():
     for key, val in results["latency"].items():
         print(f"  {key:<23} {val:>9.2f} ms")
 
-    print(f"\n{'Segment':<25} {'NDCG@K':>10} {'Precision':>10} {'Acceptance':>10}")
-    print("-" * 55)
+    print(f"\n{'Segment':<25} {'NDCG@K':>10} {'Precision':>10} {'MCS Imp(%)':>12}")
+    print("-" * 65)
     for seg_name, seg_data in results["segment_breakdown"]["by_user_segment"].items():
         print(f"  {seg_name:<23} {seg_data['ndcg_at_k']:>9.4f} "
-              f"{seg_data['precision_at_k']:>9.4f} {seg_data['acceptance_rate']:>9.4f}")
+              f"{seg_data['precision_at_k']:>9.4f} {seg_data['mcs_improvement']:>11.2f}%")
 
     # Save full results
     out_path = Path("evaluation_results.json")

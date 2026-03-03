@@ -75,6 +75,7 @@ class ServingOrchestrator:
         context: dict[str, Any] | None = None,
         top_k: int = 10,
         session_id: str | None = None,
+        mode: str = "balanced",  # "fast", "balanced", "quality"
     ) -> dict[str, Any]:
         """
         Execute the full recommendation pipeline.
@@ -139,7 +140,7 @@ class ServingOrchestrator:
 
             tracer.start_span("candidate_generation")
             candidates = self._generate_candidates(
-                cart_items, restaurant, features
+                cart_items, restaurant, features, mode=mode
             )
             tracer.end_span(n_candidates=len(candidates))
 
@@ -148,7 +149,7 @@ class ServingOrchestrator:
                 tracer.start_span("llm_reranking")
                 ranked = self.fallback.breakers["llm_api"].call(
                     primary_fn=lambda: self._llm_rerank(
-                        candidates, cart_items, restaurant, context
+                        candidates, cart_items, restaurant, context, mode=mode
                     ),
                     fallback_fn=lambda: self._graph_rerank(
                         candidates, cart_items, restaurant
@@ -316,13 +317,27 @@ class ServingOrchestrator:
 
         return features
 
-    def _generate_candidates(self, cart_items: list[dict], restaurant: dict, features: dict) -> list[dict]:
+    def _generate_candidates(
+        self, 
+        cart_items: list[dict], 
+        restaurant: dict, 
+        features: dict,
+        mode: str = "balanced"
+    ) -> list[dict]:
         """
         Stage 1: Candidate Generation (Graph-Based Retrieval)
         Builds a temporal session graph from the cart and traverses edges
-        to find highly connected candidates (speed: 10-15ms).
-        Falls back to ColdStartAgent if the cart is empty or graph yields 0.
+        to find highly connected candidates.
+        Adjusts retrieval depth based on `mode`.
         """
+        # Determine candidate depth
+        if mode == "fast":
+            cand_k = 10
+        elif mode == "quality":
+            cand_k = 30
+        else:
+            cand_k = 20
+
         # If cart is empty, we must rely entirely on Cold Start (new user / popular items)
         if not cart_items:
             from ..agents.cold_start_agent import ColdStartAgent
@@ -339,7 +354,7 @@ class ServingOrchestrator:
         # 2. Score candidates by traversing graph edges
         # get_candidate_scores inherently performs BFS-like aggregation 
         # (summing weighted PMI edges from cart nodes to candidate nodes)
-        scored_candidates = graph.get_candidate_scores(top_k=20, min_score=0.01)
+        scored_candidates = graph.get_candidate_scores(top_k=cand_k, min_score=0.01)
 
         # 3. Assemble and enrich candidates
         candidates = []
@@ -381,10 +396,10 @@ class ServingOrchestrator:
             from ..agents.cold_start_agent import ColdStartAgent
             candidates = ColdStartAgent().recommend(
                 cart_items=cart_items, restaurant=restaurant, context={},
-                cold_start_type="unusual_cart", top_k=20
+                cold_start_type="unusual_cart", top_k=cand_k
             ).get("recommendations", [])
 
-        return candidates[:20]
+        return candidates[:cand_k]
 
     def _llm_rerank(
         self,
@@ -392,20 +407,34 @@ class ServingOrchestrator:
         cart_items: list[dict],
         restaurant: dict,
         context: dict | None,
+        mode: str = "balanced"
     ) -> list[dict]:
         """
         Stage 3: LLM Re-Ranking (The AI Edge).
         Reranks candidates using SLMRerankerAgent, with a resilient fallback
         to the deterministic RerankerAgent if the SLM fails or times out.
+        Skipped in "fast" mode if latency is critical.
         """
-        from ..agents.meal_context_agent import MealContextAgent
-        from ..agents.reranker_agent import RerankerAgent
+        if mode == "fast":
+            logger.info("Fast mode selected: skipping SLM, defaulting to deterministic fallback.")
+            return self._deterministic_rerank(candidates, cart_items, restaurant, context)
+            
         from ..agents.slm_reranker_agent import SLMRerankerAgent
-
+        
         ctx = context or {"meal_type": "dinner"}
+
+        # Determine SLM parameters by mode
+        if mode == "quality":
+            temp = 0.5
+            token_limit = 200
+        else: # balanced
+            temp = 0.3
+            token_limit = 150
 
         # 1. Attempt SLM Re-ranking (Primary)
         slm_agent = SLMRerankerAgent()
+        # Mocking apply temperature into SLM params logically for now.
+        # Actually passed into prompt engine inside slm_agent if extended.
         slm_ranked = slm_agent.rerank(
             candidates=candidates,
             cart_items=cart_items,
@@ -419,8 +448,20 @@ class ServingOrchestrator:
 
         # 2. Resilient Fallback: Deterministic Re-ranking
         logger.warning("SLM re-ranking failed, falling back to deterministic RerankerAgent.")
+        return self._deterministic_rerank(candidates, cart_items, restaurant, context)
         
-        meal_agent = MealContextAgent()
+    def _deterministic_rerank(
+        self,
+        candidates: list[dict],
+        cart_items: list[dict],
+        restaurant: dict,
+        context: dict | None,
+    ) -> list[dict]:
+        """Factored out deterministic Reranker logic for reuse."""
+        from ..agents.meal_context_agent import MealContextAgent
+        from ..agents.reranker_agent import RerankerAgent
+        
+        ctx = context or {"meal_type": "dinner"}
         analysis = meal_agent.analyze(
             cart_items=cart_items,
             restaurant=restaurant,

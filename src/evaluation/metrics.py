@@ -18,7 +18,7 @@ import logging
 from typing import Callable
 
 import numpy as np
-from sklearn.metrics import ndcg_score
+from sklearn.metrics import ndcg_score, roc_auc_score
 
 logger = logging.getLogger(__name__)
 
@@ -86,6 +86,20 @@ def hit_at_k(
         total += 1
         idx += g
     return hits / total if total > 0 else 0.0
+
+
+def auc_score(
+    y_true: np.ndarray,
+    y_score: np.ndarray,
+) -> float:
+    """
+    Compute Area Under the ROC Curve.
+    Probability that a randomly chosen positive item ranks higher than a random negative item.
+    """
+    # AUC requires both positive and negative classes
+    if len(np.unique(y_true)) > 1:
+        return float(roc_auc_score(y_true > 0, y_score))
+    return 0.0
 
 
 def measure_latency(

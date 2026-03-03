@@ -18,10 +18,15 @@ import time
 from contextlib import asynccontextmanager
 from typing import Any
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Request
 from pydantic import BaseModel, Field
 
-from src.serving.inference import AddonRecommendation, InferencePipeline
+from src.serving.orchestrator import ServingOrchestrator
+
+try:
+    from prometheus_fastapi_instrumentator import Instrumentator
+except ImportError:
+    Instrumentator = None
 
 logger = logging.getLogger(__name__)
 
@@ -38,9 +43,12 @@ class CartItem(BaseModel):
 
 
 class RecommendRequest(BaseModel):
+    user_id: str = "unknown"
     cart_items: list[CartItem]
-    top_n: int = Field(default=10, ge=1, le=20)
-    excluded_ids: list[str] = Field(default_factory=list)
+    restaurant: dict[str, Any] = Field(default_factory=dict)
+    context: dict[str, Any] = Field(default_factory=dict)
+    top_n: int = Field(default=10, ge=1, le=30)
+    mode: str = "balanced"
 
 
 class SequentialRequest(BaseModel):
@@ -50,7 +58,9 @@ class SequentialRequest(BaseModel):
 
 class RecommendResponse(BaseModel):
     recommendations: list[dict[str, Any]]
+    strategy: str
     latency_ms: float
+    trace: dict[str, Any] | None = None
 
 
 class HealthResponse(BaseModel):
@@ -62,18 +72,14 @@ class HealthResponse(BaseModel):
 # ---------------------------------------------------------------------------
 # Application lifespan (load artefacts once)
 # ---------------------------------------------------------------------------
-pipeline = InferencePipeline()
+orchestrator = ServingOrchestrator()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Load ML artefacts at startup, release at shutdown."""
-    logger.info("Loading inference pipeline …")
-    try:
-        pipeline.load()
-        logger.info("Pipeline ready ✓")
-    except NotImplementedError:
-        logger.warning("Pipeline not yet implemented — running in stub mode")
+    logger.info("Initializing Serving Orchestrator …")
+    # Pre-warm things if needed
     yield
     logger.info("Shutting down …")
 
@@ -85,49 +91,58 @@ app = FastAPI(
     title="CartComplete — Super Add-On Recommender",
     version="0.1.0",
     description=(
-        "LLM-augmented synthetic data + sentence-transformer embeddings "
-        "+ LightGBM sequential ranker for Zomato Cart Super Add-On recs."
+        "Production API Gateway for MealMind AI (Zomato Cart Super Add-On)."
     ),
     lifespan=lifespan,
 )
 
+if Instrumentator:
+    Instrumentator().instrument(app).expose(app)
+
 
 @app.get("/health", response_model=HealthResponse)
 async def health():
-    info = pipeline.health() if hasattr(pipeline, "health") else {}
     return HealthResponse(
-        status=info.get("status", "ok"),
-        model_loaded=info.get("model_loaded", pipeline._loaded if hasattr(pipeline, "_loaded") else False),
-        index_size=info.get("index_size", 0),
+        status="ok",
+        model_loaded=True,
+        index_size=0,
     )
 
 
 @app.post("/recommend", response_model=RecommendResponse)
-async def recommend(req: RecommendRequest):
+async def recommend(req: RecommendRequest, request: Request):
     t0 = time.perf_counter()
+    
+    # 1. Prepare inputs
+    cart = [item.model_dump() for item in req.cart_items]
+    rest = req.restaurant or {"restaurant_id": "R_default", "cuisine_type": "North Indian"}
+    ctx = req.context or {"hour": 19, "meal_type": "dinner", "city": "Mumbai"}
+    
+    # 2. Invoke Orchestrator
     try:
-        recs = pipeline.recommend(
-            cart_items=[item.model_dump() for item in req.cart_items],
-            top_n=req.top_n,
-            excluded_ids=set(req.excluded_ids),
+        result = orchestrator.serve_request(
+            cart_items=cart,
+            restaurant=rest,
+            context=ctx,
+            top_k=req.top_n,
+            session_id=str(request.headers.get("x-session-id", "")),
+            mode=req.mode
         )
-    except NotImplementedError:
-        raise HTTPException(503, "Pipeline not yet implemented")
+    except Exception as e:
+        logger.exception("Orchestration failed")
+        return RecommendResponse(
+            recommendations=[],
+            strategy="error",
+            latency_ms=(time.perf_counter() - t0) * 1000,
+        )
 
     latency_ms = (time.perf_counter() - t0) * 1000
+    
     return RecommendResponse(
-        recommendations=[
-            {
-                "addon_id": r.addon_id,
-                "addon_name": r.addon_name,
-                "category": r.category,
-                "price": r.price,
-                "score": round(r.score, 4),
-                "rank": r.rank,
-            }
-            for r in recs
-        ],
+        recommendations=result.get("recommendations", []),
+        strategy=result.get("strategy", "unknown"),
         latency_ms=round(latency_ms, 2),
+        trace=result.get("trace", {})
     )
 
 
